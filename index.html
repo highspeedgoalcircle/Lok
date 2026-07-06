@@ -100,7 +100,7 @@
             margin-top: 15px;
         }
 
-        /* 原始按鈕樣式 */
+        /* 乾淨、標準的按鈕外觀 */
         .btn {
             background-color: rgba(255, 255, 255, 0.05);
             border: 2px solid var(--secondary);
@@ -115,6 +115,7 @@
             align-items: center;
             justify-content: center;
             word-break: break-word;
+            -webkit-tap-highlight-color: transparent; /* 移除手機上點擊的藍色預覽陰影 */
         }
 
         .btn:hover, .btn:active {
@@ -352,15 +353,27 @@
         document.getElementById('mission-visual').innerHTML = mission.visual;
         
         const optionsContainer = document.getElementById('mission-options');
+        
+        /* 核心修正點：強制將容器清空成全新的狀態，清除手機瀏覽器可能對內部元素的點擊紀錄 */
         optionsContainer.innerHTML = '';
+        optionsContainer.outerHTML = optionsContainer.outerHTML; 
+        
+        // 重新撈取重置後的容器節點
+        const freshOptionsContainer = document.getElementById('mission-options');
         
         mission.options.forEach((opt) => {
             const button = document.createElement('button');
-            /* 修正點：每次重新建立按鈕時，統一給予最乾淨、無點擊殘留狀態的 'btn' class */
             button.className = 'btn'; 
             button.innerText = opt;
-            button.onclick = () => checkAnswer(opt, mission.answer);
-            optionsContainer.appendChild(button);
+            
+            // 使用內聯樣式強制蓋掉任何可能殘留的 active 特效
+            button.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+            button.style.color = "var(--light)";
+            
+            button.onclick = function() {
+                checkAnswer(opt, mission.answer);
+            };
+            freshOptionsContainer.appendChild(button);
         });
 
         const progressPercent = (currentMission / gameMissions.length) * 100;
