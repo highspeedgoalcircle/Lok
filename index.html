@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>超人防衛隊：新手任務訓練營</title>
+    <title>超人防衛隊：隊員特訓選單</title>
     <style>
         :root {
             --primary: #ff3333;
@@ -100,6 +100,15 @@
             margin-top: 15px;
         }
 
+        .member-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+
         .btn {
             background-color: rgba(255, 255, 255, 0.05) !important;
             border: 2px solid var(--secondary) !important;
@@ -121,6 +130,14 @@
         .btn:hover {
             background-color: var(--secondary) !important;
             color: var(--dark) !important;
+        }
+
+        .btn-member {
+            font-size: 1.5rem;
+            padding: 20px;
+            border-radius: 16px;
+            border-color: var(--secondary) !important;
+            background: linear-gradient(135deg, rgba(0, 204, 255, 0.1), rgba(0, 204, 255, 0.02)) !important;
         }
 
         .btn-start {
@@ -167,11 +184,11 @@
 
         .correct-style { background-color: var(--success); color: var(--dark); }
         .wrong-style { background-color: var(--primary); color: var(--light); }
+        .info-style { background-color: var(--warning); color: var(--dark); }
 
         .progress-bar { width: 100%; height: 10px; background-color: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-top: 20px; }
         .progress-fill { height: 100%; width: 0%; background-color: var(--secondary); transition: width 0.3s ease; }
 
-        /* Beyblade X 陀螺圖片樣式 */
         .beyblade-prize {
             width: 160px;
             height: 160px;
@@ -205,9 +222,21 @@
         <div id="feedback-box">EXCELLENT!</div>
     </div>
 
-    <div id="screen-start" class="screen active">
-        <h1>ULTRAMAN ACADEMY</h1>
-        <h2>超人防衛隊：新手任務訓練營</h2>
+    <div id="screen-select-member" class="screen active">
+        <h1>ULTRAMAN DEFENSE</h1>
+        <h2>請選擇你的超人防衛隊員</h2>
+        <div class="visual-area" style="font-size: 4rem; min-height: 100px; margin: 10px 0;">🚀🛡️🛸</div>
+        <p class="instruction">Select your Cadet to start training!</p>
+        <div class="member-grid">
+            <button class="btn btn-member" onclick="selectMember('亦樂')">⚡ 亦樂 (Cadet Lok)</button>
+            <button class="btn btn-member" onclick="selectMember('允喬')">🛡️ 允喬 (Cadet Kiu)</button>
+            <button class="btn btn-member" onclick="selectMember('立言')">🔮 立言 (Cadet Yin)</button>
+        </div>
+    </div>
+
+    <div id="screen-start" class="screen">
+        <h1 id="welcome-title">ULTRAMAN ACADEMY</h1>
+        <h2 id="welcome-subtitle">超人防衛隊：新手任務訓練營</h2>
         <div class="visual-area" style="font-size: 4.5rem;">⚡🦸‍♂️ ⚔️ 👾⚡</div>
         <p class="instruction">Welcome, Cadet! 歡迎來到防衛隊！</p>
         <button class="btn btn-start" onclick="startGame()">START MISSION!</button>
@@ -227,7 +256,7 @@
         <img class="beyblade-prize" src="https://images.unsplash.com/photo-1611605698335-8b15d27e0397?auto=format&fit=crop&w=300&q=80" alt="Beyblade X" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3209/3209930.png';">
         
         <p class="instruction" style="color: var(--success); font-size: 1.4rem;">3, 2, 1, Go Shoot!! 恭喜你完成全部挑戰！</p>
-        <button class="btn btn-start" onclick="resetGame()">再挑戰一次</button>
+        <button class="btn btn-start" onclick="resetGame()">回主選單</button>
     </div>
 
     <div class="progress-bar">
@@ -237,6 +266,7 @@
 
 <script>
     let audioCtx = null;
+    let currentSelectedMember = "";
 
     function initAudio() {
         if (!audioCtx) {
@@ -275,16 +305,40 @@
             gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
             osc.start(); osc.stop(audioCtx.currentTime + 0.25);
         } else if (type === 'victory') {
-            // 通關特別豪華音樂
             const now = audioCtx.currentTime;
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(523.25, now); // C5
-            osc.frequency.setValueAtTime(659.25, now + 0.15); // E5
-            osc.frequency.setValueAtTime(783.99, now + 0.3); // G5
-            osc.frequency.setValueAtTime(1046.50, now + 0.45); // C6
+            osc.frequency.setValueAtTime(523.25, now); 
+            osc.frequency.setValueAtTime(659.25, now + 0.15); 
+            osc.frequency.setValueAtTime(783.99, now + 0.3); 
+            osc.frequency.setValueAtTime(1046.50, now + 0.45); 
             gain.gain.setValueAtTime(0.2, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
             osc.start(); osc.stop(now + 0.8);
+        }
+    }
+
+    // 隊員選擇邏輯
+    function selectMember(name) {
+        playSound('laser');
+        if (name === '亦樂') {
+            currentSelectedMember = "亦樂";
+            // 切換至歡迎畫面
+            document.getElementById('welcome-title').innerText = "LOK'S MISSION";
+            document.getElementById('welcome-subtitle').innerText = "超人防衛隊：亦樂特訓基地";
+            document.getElementById('screen-select-member').classList.remove('active');
+            document.getElementById('screen-start').classList.add('active');
+        } else {
+            // 允喬和立言顯示製作中提示
+            const overlay = document.getElementById('feedback-overlay');
+            const box = document.getElementById('feedback-box');
+            box.innerHTML = `<span style="font-size:1.8rem; display:block; margin-bottom:10px;">MISSION LOADING...</span><span style="font-size:2.3rem; color:#ffcc00;">🛠️ ${name}的任務製作中！</span>`;
+            box.className = "info-style";
+            overlay.classList.add('show-overlay');
+            
+            // 1.5秒後自動關閉提示
+            setTimeout(() => {
+                overlay.classList.remove('show-overlay');
+            }, 1800);
         }
     }
 
@@ -449,8 +503,9 @@
 
     function resetGame() {
         document.getElementById('screen-win').classList.remove('active');
-        document.getElementById('screen-start').classList.add('active');
+        document.getElementById('screen-select-member').classList.add('active');
         document.getElementById('progress').style.width = '0%';
+        currentSelectedMember = "";
     }
 </script>
 
