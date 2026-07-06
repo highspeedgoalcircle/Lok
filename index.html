@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超人防衛隊：新手任務訓練營</title>
+    <style>
+        :root {
+            --primary: #ff3333;
+            --secondary: #00ccff;
+            --dark: #0a0f1d;
+            --light: #ffffff;
+            --success: #00ff66;
+            --warning: #ffcc00;
+        }
+
+        body {
+            margin: 0;
+            padding: 10px;
+            font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--dark);
+            color: var(--light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 650px;
+            min-height: 85vh;
+            background: linear-gradient(135deg, #111827, #0f172a);
+            border: 4px solid var(--secondary);
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0, 204, 255, 0.3);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 25px;
+            box-sizing: border-box;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            text-align: center;
+            width: 100%;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+            margin: 5px 0;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            color: var(--secondary);
+            margin: 5px 0;
+        }
+
+        .instruction {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #cbd5e1;
+            padding: 0 10px;
+            word-break: break-word;
+            font-weight: bold;
+        }
+
+        .visual-area {
+            font-size: 3.5rem;
+            margin: 20px 0;
+            line-height: 1.4;
+            min-height: 140px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            letter-spacing: 5px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .btn {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--secondary);
+            color: var(--light);
+            padding: 16px 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-word;
+        }
+
+        .btn:hover, .btn:active {
+            background-color: var(--secondary);
+            color: var(--dark);
+            box-shadow: 0 0 15px var(--secondary);
+        }
+
+        .btn-start {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            animation: bounce 2s infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        #feedback {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 3rem;
+            font-weight: bold;
+            padding: 15px 30px;
+            border-radius: 15px;
+            pointer-events: none;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        #feedback.correct { background-color: var(--success); color: var(--dark); transform: translate(-50%, -50%) scale(1); }
+        #feedback.wrong { background-color: var(--primary); color: var(--light); transform: translate(-50%, -50%) scale(1); }
+
+        .progress-bar { width: 100%; height: 10px; background-color: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-top: 20px; }
+        .progress-fill { height: 100%; width: 0%; background-color: var(--secondary); transition: width 0.3s ease; }
+
+        @media (max-width: 380px) {
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .instruction { font-size: 1.1rem; }
+            .visual-area { font-size: 2.8rem; }
+            .btn { font-size: 1rem; padding: 12px 6px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="feedback">EXCELLENT!</div>
+
+    <div id="screen-start" class="screen active">
+        <h1>ULTRAMAN ACADEMY</h1>
+        <h2>超人防衛隊：新手任務訓練營</h2>
+        <div class="visual-area" style="font-size: 4.5rem;">⚡🦸‍♂️ ⚔️ 👾⚡</div>
+        <p class="instruction">Welcome, Cadet! 歡迎來到防衛隊！</p>
+        <button class="btn btn-start" onclick="startGame()">START MISSION!</button>
+    </div>
+
+    <div id="screen-game" class="screen">
+        <h2 id="mission-title">Mission</h2>
+        <p id="mission-instruction" class="instruction">Question</p>
+        <div id="mission-visual" class="visual-area"></div>
+        <div id="mission-options" class="options-grid"></div>
+    </div>
+
+    <div id="screen-win" class="screen">
+        <h1>MISSION ACCOMPLISHED!</h1>
+        <h2>恭喜你通過特訓！</h2>
+        <div class="visual-area" style="font-size: 5rem;">🎖️✨🛸</div>
+        <p class="instruction" style="color: var(--success);">Great job, Cadet! You passed the training!</p>
+        <button class="btn btn-start" onclick="resetGame()">再挑戰一次</button>
+    </div>
+
+    <div class="progress-bar">
+        <div id="progress" class="progress-fill"></div>
+    </div>
+</div>
+
+<script>
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    function playSound(type) {
+        initAudio();
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime); 
+            osc.frequency.setValueAtTime(554, audioCtx.currentTime + 0.08); 
+            osc.frequency.setValueAtTime(659, audioCtx.currentTime + 0.16); 
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.24); 
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(60, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'laser') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.25);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+        }
+    }
+
+    const baseMissions = [
+        {
+            title: "Slide 2: 我們的戰友 (Pronouns)",
+            instruction: "Who is he? 🦸‍♂️",
+            visual: "🦸‍♂️",
+            options: ["He is Ultraman.", "She is Ultraman.", "They are Ultraman.", "It is Ultraman."],
+            answer: "He is Ultraman."
+        },
+        {
+            title: "Slide 2: 我們的戰友 (Pronouns)",
+            instruction: "Who is she? 👩‍🔬",
+            visual: "👩‍🔬",
+            options: ["He is Science Officer.", "She is Science Officer.", "We are Team.", "You are Cadet."],
+            answer: "She is Science Officer."
+        },
+        {
+            title: "Slide 2: 我們的戰友 (Pronouns)",
+            instruction: "Who are they? 🦸‍♂️🦸‍♂️🦸‍♂️",
+            visual: "🦸‍♂️🦸‍♂️🦸‍♂️",
+            options: ["We are team.", "You are team.", "It is team.", "They are our team."],
+            answer: "They are our team."
+        },
+        {
+            title: "Slide 3: 情報掃描 (Numbers & Colors)",
+            instruction: "Scan the monsters! How many RED monsters? 🔴👾",
+            visual: "🔴👾 🔴👾 🔴👾<br>🔵👾 🔵👾",
+            options: ["Two blue monsters", "Three red monsters", "Three blue monsters", "Five red monsters"],
+            answer: "Three red monsters"
+        },
+        {
+            title: "Slide 4: 遠近偵測雷達 (This / That)",
+            instruction: "The monster is FAR away! 📡 ⋯ ⋯ 👾",
+            visual: "📡 ⋯ ⋯ ⋯ ⋯ 👾",
+            options: ["This is a monster.", "That is a monster.", "These are monsters.", "Those are monsters."],
+            answer: "That is a monster."
+        },
+        {
+            title: "Slide 4: 遠近偵測雷達 (These / Those)",
+            instruction: "Look! MANY monsters are NEAR! ⚡👾👾",
+            visual: "⚡ 👾 👾",
+            options: ["This is monsters.", "That is monsters.", "These are monsters.", "Those are monsters."],
+            answer: "These are monsters."
+        },
+        {
+            title: "Slide 5: 躲貓貓任務 (In / On / Under)",
+            instruction: "Where is the monster? 👾🏢",
+            visual: "👾<br>🏢",
+            options: ["in the building", "on the building", "under the building", "next to the building"],
+            answer: "on the building"
+        },
+        {
+            title: "Slide 5: 躲貓貓任務 (In / On / Under)",
+            instruction: "Where is the monster now? 🏢👇👾",
+            visual: "🏢<br>👇<br>👾",
+            options: ["in the building", "on the building", "under the building", "you are the building"],
+            answer: "under the building"
+        }
+    ];
+
+    let gameMissions = [];
+    let currentMission = 0;
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function initGameMissions() {
+        gameMissions = JSON.parse(JSON.stringify(baseMissions));
+        shuffle(gameMissions);
+        gameMissions.forEach(m => {
+            shuffle(m.options);
+        });
+    }
+
+    function startGame() {
+        playSound('laser');
+        initGameMissions();
+        currentMission = 0;
+        document.getElementById('screen-start').classList.remove('active');
+        document.getElementById('screen-game').classList.add('active');
+        loadMission();
+    }
+
+    function loadMission() {
+        const mission = gameMissions[currentMission];
+        document.getElementById('mission-title').innerText = `Mission ${currentMission + 1} / ${gameMissions.length}`;
+        document.getElementById('mission-instruction').innerHTML = mission.instruction;
+        document.getElementById('mission-visual').innerHTML = mission.visual;
+        
+        const optionsContainer = document.getElementById('mission-options');
+        optionsContainer.innerHTML = '';
+        
+        mission.options.forEach((opt) => {
+            const button = document.createElement('button');
+            button.className = 'btn';
+            button.innerText = opt;
+            button.onclick = () => checkAnswer(opt, mission.answer);
+            optionsContainer.appendChild(button);
+        });
+
+        const progressPercent = (currentMission / gameMissions.length) * 100;
+        document.getElementById('progress').style.width = progressPercent + '%';
+    }
+
+    function checkAnswer(selectedOpt, correctOpt) {
+        const feedback = document.getElementById('feedback');
+        if (selectedOpt === correctOpt) {
+            playSound('correct');
+            feedback.innerText = "EXCELLENT! 🎖️";
+            feedback.className = "correct";
+            setTimeout(() => {
+                feedback.className = "";
+                currentMission++;
+                if (currentMission < gameMissions.length) {
+                    loadMission();
+                } else {
+                    winGame();
+                }
+            }, 1200);
+        } else {
+            playSound('wrong');
+            feedback.innerText = "TRY AGAIN! ⚡";
+            feedback.className = "wrong";
+            setTimeout(() => {
+                feedback.className = "";
+            }, 1000);
+        }
+    }
+
+    function winGame() {
+        document.getElementById('progress').style.width = '100%';
+        document.getElementById('screen-game').classList.remove('active');
+        document.getElementById('screen-win').classList.add('active');
+    }
+
+    function resetGame() {
+        document.getElementById('screen-win').classList.remove('active');
+        document.getElementById('screen-start').classList.add('active');
+        document.getElementById('progress').style.width = '0%';
+    }
+</script>
+
+</body>
+</html>
