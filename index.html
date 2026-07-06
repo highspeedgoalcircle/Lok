@@ -100,7 +100,6 @@
             margin-top: 15px;
         }
 
-        /* 移除任何可能引發手機卡死藍色狀態的 outline/focus 樣式 */
         .btn {
             background-color: rgba(255, 255, 255, 0.05) !important;
             border: 2px solid var(--secondary) !important;
@@ -119,7 +118,6 @@
             -webkit-tap-highlight-color: transparent !important;
         }
 
-        /* 僅在滑鼠懸停或真正點擊的瞬間觸發外觀改變 */
         .btn:hover {
             background-color: var(--secondary) !important;
             color: var(--dark) !important;
@@ -173,6 +171,21 @@
         .progress-bar { width: 100%; height: 10px; background-color: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-top: 20px; }
         .progress-fill { height: 100%; width: 0%; background-color: var(--secondary); transition: width 0.3s ease; }
 
+        /* Beyblade X 陀螺圖片樣式 */
+        .beyblade-prize {
+            width: 160px;
+            height: 160px;
+            object-fit: contain;
+            margin: 15px 0;
+            filter: drop-shadow(0 0 15px var(--warning));
+            animation: spinPrize 4s linear infinite;
+        }
+
+        @keyframes spinPrize {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 380px) {
             h1 { font-size: 1.6rem; }
             h2 { font-size: 1.3rem; }
@@ -180,6 +193,7 @@
             .visual-area { font-size: 2.8rem; }
             .btn { font-size: 1rem; padding: 12px 6px; }
             #feedback-box { font-size: 2.2rem; padding: 15px 25px; }
+            .beyblade-prize { width: 120px; height: 120px; }
         }
     </style>
 </head>
@@ -195,7 +209,7 @@
         <h1>ULTRAMAN ACADEMY</h1>
         <h2>超人防衛隊：新手任務訓練營</h2>
         <div class="visual-area" style="font-size: 4.5rem;">⚡🦸‍♂️ ⚔️ 👾⚡</div>
-        <p class="instruction">Welcome, 亦樂! 歡迎來到防衛隊！</p>
+        <p class="instruction">Welcome, Cadet! 歡迎來到防衛隊！</p>
         <button class="btn btn-start" onclick="startGame()">START MISSION!</button>
     </div>
 
@@ -207,10 +221,12 @@
     </div>
 
     <div id="screen-win" class="screen">
-        <h1>MISSION ACCOMPLISHED!</h1>
-        <h2>恭喜你通過特訓！</h2>
-        <div class="visual-area" style="font-size: 5rem;">🎖️✨🛸</div>
-        <p class="instruction" style="color: var(--success);">Great job, Cadet! You passed the training!</p>
+        <h1>🏆 MISSION ACCOMPLISHED!</h1>
+        <h2 style="color: var(--warning);">你獲得了終極陀螺獎勵！</h2>
+        
+        <img class="beyblade-prize" src="https://images.unsplash.com/photo-1611605698335-8b15d27e0397?auto=format&fit=crop&w=300&q=80" alt="Beyblade X" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3209/3209930.png';">
+        
+        <p class="instruction" style="color: var(--success); font-size: 1.4rem;">3, 2, 1, Go Shoot!! 恭喜你完成全部挑戰！</p>
         <button class="btn btn-start" onclick="resetGame()">再挑戰一次</button>
     </div>
 
@@ -258,6 +274,17 @@
             osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.25);
             gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
             osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+        } else if (type === 'victory') {
+            // 通關特別豪華音樂
+            const now = audioCtx.currentTime;
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, now); // C5
+            osc.frequency.setValueAtTime(659.25, now + 0.15); // E5
+            osc.frequency.setValueAtTime(783.99, now + 0.3); // G5
+            osc.frequency.setValueAtTime(1046.50, now + 0.45); // C6
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+            osc.start(); osc.stop(now + 0.8);
         }
     }
 
@@ -356,11 +383,9 @@
         
         const optionsContainer = document.getElementById('mission-options');
         
-        // 核心強效修正：換題時直接讓整塊網格完全隱藏，打碎手機瀏覽器的渲染記憶鏈
         optionsContainer.style.display = 'none';
         optionsContainer.innerHTML = '';
         
-        // 生成全新帶有隨機亂數防快取 key 的按鈕群
         const randomKey = Math.random().toString(36).substring(2, 7);
         
         mission.options.forEach((opt, index) => {
@@ -369,15 +394,13 @@
             button.innerText = opt;
             button.setAttribute('data-key', `${randomKey}-${index}`);
             
-            button.onclick = function(e) {
-                // 點擊後立刻讓按鈕失去焦點，防止外觀鎖定
+            button.onclick = function() {
                 button.blur();
                 checkAnswer(opt, mission.answer);
             };
             optionsContainer.appendChild(button);
         });
 
-        // 重新呼叫顯示，強迫瀏覽器重頭繪製按鈕
         setTimeout(() => {
             optionsContainer.style.display = 'grid';
         }, 20);
@@ -418,6 +441,7 @@
     }
 
     function winGame() {
+        playSound('victory');
         document.getElementById('progress').style.width = '100%';
         document.getElementById('screen-game').classList.remove('active');
         document.getElementById('screen-win').classList.add('active');
