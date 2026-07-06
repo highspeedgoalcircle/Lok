@@ -41,6 +41,7 @@
             justify-content: space-between;
             padding: 25px;
             box-sizing: border-box;
+            overflow: hidden;
         }
 
         .screen {
@@ -135,23 +136,36 @@
             50% { transform: translateY(-5px); }
         }
 
-        #feedback {
+        /* 修正版：置中彈出提示圖層，防止被任何物件遮擋 */
+        #feedback-overlay {
             position: absolute;
-            top: 45%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            font-size: 3rem;
-            font-weight: bold;
-            padding: 15px 30px;
-            border-radius: 15px;
-            pointer-events: none;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 10;
-            white-space: nowrap;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 15, 29, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
         }
 
-        #feedback.correct { background-color: var(--success); color: var(--dark); transform: translate(-50%, -50%) scale(1); }
-        #feedback.wrong { background-color: var(--primary); color: var(--light); transform: translate(-50%, -50%) scale(1); }
+        #feedback-box {
+            font-size: 2.8rem;
+            font-weight: bold;
+            padding: 20px 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            transform: scale(0.5);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .show-overlay { display: flex !important; }
+        .show-overlay #feedback-box { transform: scale(1); }
+
+        .correct-style { background-color: var(--success); color: var(--dark); }
+        .wrong-style { background-color: var(--primary); color: var(--light); }
 
         .progress-bar { width: 100%; height: 10px; background-color: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-top: 20px; }
         .progress-fill { height: 100%; width: 0%; background-color: var(--secondary); transition: width 0.3s ease; }
@@ -162,14 +176,20 @@
             .instruction { font-size: 1.1rem; }
             .visual-area { font-size: 2.8rem; }
             .btn { font-size: 1rem; padding: 12px 6px; }
+            #feedback-box { font-size: 2.2rem; padding: 15px 25px; }
         }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="feedback">EXCELLENT!</div>
+    
+    <!-- 修正後的獨立提示遮罩層 -->
+    <div id="feedback-overlay">
+        <div id="feedback-box">EXCELLENT!</div>
+    </div>
 
+    <!-- Slide 1: 歡迎畫面 -->
     <div id="screen-start" class="screen active">
         <h1>ULTRAMAN ACADEMY</h1>
         <h2>超人防衛隊：新手任務訓練營</h2>
@@ -178,6 +198,7 @@
         <button class="btn btn-start" onclick="startGame()">START MISSION!</button>
     </div>
 
+    <!-- 遊戲通用畫面 -->
     <div id="screen-game" class="screen">
         <h2 id="mission-title">Mission</h2>
         <p id="mission-instruction" class="instruction">Question</p>
@@ -185,6 +206,7 @@
         <div id="mission-options" class="options-grid"></div>
     </div>
 
+    <!-- Slide 6: 結算畫面 -->
     <div id="screen-win" class="screen">
         <h1>MISSION ACCOMPLISHED!</h1>
         <h2>恭喜你通過特訓！</h2>
@@ -349,13 +371,17 @@
     }
 
     function checkAnswer(selectedOpt, correctOpt) {
-        const feedback = document.getElementById('feedback');
+        const overlay = document.getElementById('feedback-overlay');
+        const box = document.getElementById('feedback-box');
+        
         if (selectedOpt === correctOpt) {
             playSound('correct');
-            feedback.innerText = "EXCELLENT! 🎖️";
-            feedback.className = "correct";
+            box.innerText = "EXCELLENT! 🎖️";
+            box.className = "correct-style";
+            overlay.classList.add('show-overlay');
+            
             setTimeout(() => {
-                feedback.className = "";
+                overlay.classList.remove('show-overlay');
                 currentMission++;
                 if (currentMission < gameMissions.length) {
                     loadMission();
@@ -365,10 +391,12 @@
             }, 1200);
         } else {
             playSound('wrong');
-            feedback.innerText = "TRY AGAIN! ⚡";
-            feedback.className = "wrong";
+            box.innerText = "TRY AGAIN! ⚡";
+            box.className = "wrong-style";
+            overlay.classList.add('show-overlay');
+            
             setTimeout(() => {
-                feedback.className = "";
+                overlay.classList.remove('show-overlay');
             }, 1000);
         }
     }
