@@ -100,6 +100,7 @@
             margin-top: 15px;
         }
 
+        /* 原始按鈕樣式 */
         .btn {
             background-color: rgba(255, 255, 255, 0.05);
             border: 2px solid var(--secondary);
@@ -136,7 +137,6 @@
             50% { transform: translateY(-5px); }
         }
 
-        /* 修正版：置中彈出提示圖層，防止被任何物件遮擋 */
         #feedback-overlay {
             position: absolute;
             top: 0;
@@ -184,12 +184,10 @@
 
 <div id="game-container">
     
-    <!-- 修正後的獨立提示遮罩層 -->
     <div id="feedback-overlay">
         <div id="feedback-box">EXCELLENT!</div>
     </div>
 
-    <!-- Slide 1: 歡迎畫面 -->
     <div id="screen-start" class="screen active">
         <h1>ULTRAMAN ACADEMY</h1>
         <h2>超人防衛隊：新手任務訓練營</h2>
@@ -198,7 +196,6 @@
         <button class="btn btn-start" onclick="startGame()">START MISSION!</button>
     </div>
 
-    <!-- 遊戲通用畫面 -->
     <div id="screen-game" class="screen">
         <h2 id="mission-title">Mission</h2>
         <p id="mission-instruction" class="instruction">Question</p>
@@ -206,7 +203,6 @@
         <div id="mission-options" class="options-grid"></div>
     </div>
 
-    <!-- Slide 6: 結算畫面 -->
     <div id="screen-win" class="screen">
         <h1>MISSION ACCOMPLISHED!</h1>
         <h2>恭喜你通過特訓！</h2>
@@ -360,7 +356,8 @@
         
         mission.options.forEach((opt) => {
             const button = document.createElement('button');
-            button.className = 'btn';
+            /* 修正點：每次重新建立按鈕時，統一給予最乾淨、無點擊殘留狀態的 'btn' class */
+            button.className = 'btn'; 
             button.innerText = opt;
             button.onclick = () => checkAnswer(opt, mission.answer);
             optionsContainer.appendChild(button);
