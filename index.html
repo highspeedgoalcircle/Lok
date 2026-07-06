@@ -100,33 +100,35 @@
             margin-top: 15px;
         }
 
-        /* 乾淨、標準的按鈕外觀 */
+        /* 移除任何可能引發手機卡死藍色狀態的 outline/focus 樣式 */
         .btn {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 2px solid var(--secondary);
-            color: var(--light);
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            border: 2px solid var(--secondary) !important;
+            color: var(--light) !important;
             padding: 16px 10px;
             font-size: 1.2rem;
             font-weight: bold;
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: background-color 0.2s ease, color 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             word-break: break-word;
-            -webkit-tap-highlight-color: transparent; /* 移除手機上點擊的藍色預覽陰影 */
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent !important;
         }
 
-        .btn:hover, .btn:active {
-            background-color: var(--secondary);
-            color: var(--dark);
-            box-shadow: 0 0 15px var(--secondary);
+        /* 僅在滑鼠懸停或真正點擊的瞬間觸發外觀改變 */
+        .btn:hover {
+            background-color: var(--secondary) !important;
+            color: var(--dark) !important;
         }
 
         .btn-start {
-            background-color: var(--primary);
-            border-color: var(--primary);
+            background-color: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: var(--light) !important;
             padding: 15px 40px;
             font-size: 1.5rem;
             animation: bounce 2s infinite;
@@ -144,7 +146,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(10, 15, 29, 0.85);
+            background-color: rgba(10, 15, 29, 0.9);
             display: none;
             justify-content: center;
             align-items: center;
@@ -261,56 +263,56 @@
 
     const baseMissions = [
         {
-            title: "Slide 2: 我們的戰友 (Pronouns)",
+            title: "M1: 我們的戰友 (Pronouns)",
             instruction: "Who is he? 🦸‍♂️",
             visual: "🦸‍♂️",
             options: ["He is Ultraman.", "She is Ultraman.", "They are Ultraman.", "It is Ultraman."],
             answer: "He is Ultraman."
         },
         {
-            title: "Slide 2: 我們的戰友 (Pronouns)",
+            title: "M2: 我們的戰友 (Pronouns)",
             instruction: "Who is she? 👩‍🔬",
             visual: "👩‍🔬",
             options: ["He is Science Officer.", "She is Science Officer.", "We are Team.", "You are Cadet."],
             answer: "She is Science Officer."
         },
         {
-            title: "Slide 2: 我們的戰友 (Pronouns)",
+            title: "M3: 我們的戰友 (Pronouns)",
             instruction: "Who are they? 🦸‍♂️🦸‍♂️🦸‍♂️",
             visual: "🦸‍♂️🦸‍♂️🦸‍♂️",
             options: ["We are team.", "You are team.", "It is team.", "They are our team."],
             answer: "They are our team."
         },
         {
-            title: "Slide 3: 情報掃描 (Numbers & Colors)",
+            title: "M4: 情報掃描 (Numbers & Colors)",
             instruction: "Scan the monsters! How many RED monsters? 🔴👾",
             visual: "🔴👾 🔴👾 🔴👾<br>🔵👾 🔵👾",
             options: ["Two blue monsters", "Three red monsters", "Three blue monsters", "Five red monsters"],
             answer: "Three red monsters"
         },
         {
-            title: "Slide 4: 遠近偵測雷達 (This / That)",
+            title: "M5: 遠近偵測雷達 (This / That)",
             instruction: "The monster is FAR away! 📡 ⋯ ⋯ 👾",
             visual: "📡 ⋯ ⋯ ⋯ ⋯ 👾",
             options: ["This is a monster.", "That is a monster.", "These are monsters.", "Those are monsters."],
             answer: "That is a monster."
         },
         {
-            title: "Slide 4: 遠近偵測雷達 (These / Those)",
+            title: "M6: 遠近偵測雷達 (These / Those)",
             instruction: "Look! MANY monsters are NEAR! ⚡👾👾",
             visual: "⚡ 👾 👾",
             options: ["This is monsters.", "That is monsters.", "These are monsters.", "Those are monsters."],
             answer: "These are monsters."
         },
         {
-            title: "Slide 5: 躲貓貓任務 (In / On / Under)",
+            title: "M7: 躲貓貓任務 (In / On / Under)",
             instruction: "Where is the monster? 👾🏢",
             visual: "👾<br>🏢",
             options: ["in the building", "on the building", "under the building", "next to the building"],
             answer: "on the building"
         },
         {
-            title: "Slide 5: 躲貓貓任務 (In / On / Under)",
+            title: "M8: 躲貓貓任務 (In / On / Under)",
             instruction: "Where is the monster now? 🏢👇👾",
             visual: "🏢<br>👇<br>👾",
             options: ["in the building", "on the building", "under the building", "you are the building"],
@@ -354,27 +356,31 @@
         
         const optionsContainer = document.getElementById('mission-options');
         
-        /* 核心修正點：強制將容器清空成全新的狀態，清除手機瀏覽器可能對內部元素的點擊紀錄 */
+        // 核心強效修正：換題時直接讓整塊網格完全隱藏，打碎手機瀏覽器的渲染記憶鏈
+        optionsContainer.style.display = 'none';
         optionsContainer.innerHTML = '';
-        optionsContainer.outerHTML = optionsContainer.outerHTML; 
         
-        // 重新撈取重置後的容器節點
-        const freshOptionsContainer = document.getElementById('mission-options');
+        // 生成全新帶有隨機亂數防快取 key 的按鈕群
+        const randomKey = Math.random().toString(36).substring(2, 7);
         
-        mission.options.forEach((opt) => {
+        mission.options.forEach((opt, index) => {
             const button = document.createElement('button');
             button.className = 'btn'; 
             button.innerText = opt;
+            button.setAttribute('data-key', `${randomKey}-${index}`);
             
-            // 使用內聯樣式強制蓋掉任何可能殘留的 active 特效
-            button.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-            button.style.color = "var(--light)";
-            
-            button.onclick = function() {
+            button.onclick = function(e) {
+                // 點擊後立刻讓按鈕失去焦點，防止外觀鎖定
+                button.blur();
                 checkAnswer(opt, mission.answer);
             };
-            freshOptionsContainer.appendChild(button);
+            optionsContainer.appendChild(button);
         });
+
+        // 重新呼叫顯示，強迫瀏覽器重頭繪製按鈕
+        setTimeout(() => {
+            optionsContainer.style.display = 'grid';
+        }, 20);
 
         const progressPercent = (currentMission / gameMissions.length) * 100;
         document.getElementById('progress').style.width = progressPercent + '%';
