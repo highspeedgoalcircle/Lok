@@ -101,11 +101,11 @@
         }
 
         .member-grid {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             width: 100%;
-            max-width: 400px;
+            max-width: 500px;
             margin-top: 20px;
         }
 
@@ -133,8 +133,8 @@
         }
 
         .btn-member {
-            font-size: 1.5rem;
-            padding: 20px;
+            font-size: 1.3rem;
+            padding: 20px 10px;
             border-radius: 16px;
             border-color: var(--secondary) !important;
             background: linear-gradient(135deg, rgba(0, 204, 255, 0.1), rgba(0, 204, 255, 0.02)) !important;
@@ -203,12 +203,13 @@
             to { transform: rotate(360deg); }
         }
 
-        @media (max-width: 380px) {
+        @media (max-width: 400px) {
             h1 { font-size: 1.6rem; }
             h2 { font-size: 1.3rem; }
             .instruction { font-size: 1.1rem; }
             .visual-area { font-size: 2.8rem; }
             .btn { font-size: 1rem; padding: 12px 6px; }
+            .btn-member { font-size: 1.1rem; padding: 15px 5px; }
             #feedback-box { font-size: 2.2rem; padding: 15px 25px; }
             .beyblade-prize { width: 120px; height: 120px; }
         }
@@ -218,22 +219,26 @@
 
 <div id="game-container">
     
+    <!-- 提示遮罩層 -->
     <div id="feedback-overlay">
         <div id="feedback-box">EXCELLENT!</div>
     </div>
 
+    <!-- 選擇隊員畫面 (已加入 晴晴) -->
     <div id="screen-select-member" class="screen active">
         <h1>ULTRAMAN DEFENSE</h1>
         <h2>請選擇你的超人防衛隊員</h2>
         <div class="visual-area" style="font-size: 4rem; min-height: 100px; margin: 10px 0;">🚀🛡️🛸</div>
         <p class="instruction">Select your Cadet to start training!</p>
         <div class="member-grid">
-            <button class="btn btn-member" onclick="selectMember('亦樂')">⚡ 亦樂 (Cadet Lok)</button>
-            <button class="btn btn-member" onclick="selectMember('允喬')">🛡️ 允喬 (Cadet Kiu)</button>
-            <button class="btn btn-member" onclick="selectMember('立言')">🔮 立言 (Cadet Yin)</button>
+            <button class="btn btn-member" onclick="selectMember('亦樂')">⚡ 亦樂<br>(Lok)</button>
+            <button class="btn btn-member" onclick="selectMember('允喬')">🛡️ 允喬<br>(Kiu)</button>
+            <button class="btn btn-member" onclick="selectMember('立言')">🔮 立言<br>(Yin)</button>
+            <button class="btn btn-member" onclick="selectMember('晴晴')">🌸 晴晴<br>(Ching)</button>
         </div>
     </div>
 
+    <!-- Slide 1: 歡迎畫面 (點選亦樂後顯示) -->
     <div id="screen-start" class="screen">
         <h1 id="welcome-title">ULTRAMAN ACADEMY</h1>
         <h2 id="welcome-subtitle">超人防衛隊：新手任務訓練營</h2>
@@ -242,6 +247,7 @@
         <button class="btn btn-start" onclick="startGame()">START MISSION!</button>
     </div>
 
+    <!-- 遊戲通用畫面 -->
     <div id="screen-game" class="screen">
         <h2 id="mission-title">Mission</h2>
         <p id="mission-instruction" class="instruction">Question</p>
@@ -249,6 +255,7 @@
         <div id="mission-options" class="options-grid"></div>
     </div>
 
+    <!-- Slide 6: 結算畫面 -->
     <div id="screen-win" class="screen">
         <h1>🏆 MISSION ACCOMPLISHED!</h1>
         <h2 style="color: var(--warning);">你獲得了終極陀螺獎勵！</h2>
@@ -317,25 +324,23 @@
         }
     }
 
-    // 隊員選擇邏輯
+    // 隊員選擇邏輯 (包含 晴晴)
     function selectMember(name) {
         playSound('laser');
         if (name === '亦樂') {
             currentSelectedMember = "亦樂";
-            // 切換至歡迎畫面
             document.getElementById('welcome-title').innerText = "LOK'S MISSION";
             document.getElementById('welcome-subtitle').innerText = "超人防衛隊：亦樂特訓基地";
             document.getElementById('screen-select-member').classList.remove('active');
             document.getElementById('screen-start').classList.add('active');
         } else {
-            // 允喬和立言顯示製作中提示
+            // 允喬、立言、晴晴 顯示製作中提示
             const overlay = document.getElementById('feedback-overlay');
             const box = document.getElementById('feedback-box');
             box.innerHTML = `<span style="font-size:1.8rem; display:block; margin-bottom:10px;">MISSION LOADING...</span><span style="font-size:2.3rem; color:#ffcc00;">🛠️ ${name}的任務製作中！</span>`;
             box.className = "info-style";
             overlay.classList.add('show-overlay');
             
-            // 1.5秒後自動關閉提示
             setTimeout(() => {
                 overlay.classList.remove('show-overlay');
             }, 1800);
