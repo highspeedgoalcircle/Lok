@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>跨學科自主測驗系統（五人聯動完整版）</title>
+    <title>卡樂的中二級跨學科題庫測驗</title>
     <style>
         :root {
             --primary-color: #2b6cb0;
@@ -40,34 +40,16 @@
 
         h1 {
             color: var(--primary-color);
-            margin: 0 0 15px 0;
+            margin: 0 0 10px 0;
         }
 
-        .user-selector {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 10px;
-        }
-
-        .user-btn {
-            background-color: #e2e8f0;
-            border: 2px solid transparent;
-            padding: 8px 18px;
-            font-size: 1em;
-            font-weight: bold;
-            border-radius: 20px;
-            cursor: pointer;
-            color: #4a5568;
-            transition: all 0.2s;
-        }
-
-        .user-btn.active {
-            background-color: #3182ce;
+        .user-badge {
+            background-color: var(--primary-color);
             color: white;
-            border-color: #2b6cb0;
-            box-shadow: 0 2px 4px rgba(49, 130, 206, 0.4);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: inline-block;
         }
 
         .nav-tabs {
@@ -176,6 +158,7 @@
             text-align: center;
         }
 
+        /* 答案反饋樣式 */
         .correct-answer {
             background-color: #c6f6d5 !important;
             border-color: #68d391 !important;
@@ -190,7 +173,6 @@
             font-weight: bold;
             margin-top: 8px;
             display: none;
-            color: #c53030;
         }
 
         .math-expr {
@@ -206,20 +188,29 @@
 
 <div class="container">
     <header>
-        <h1>跨學科自主測驗題庫系統</h1>
-        <div class="user-selector">
-            <button class="user-btn active" onclick="switchUser('晴晴')">晴晴</button>
-            <button class="user-btn" onclick="switchUser('立言')">立言</button>
-            <button class="user-btn" onclick="switchUser('允喬')">允喬</button>
-            <button class="user-btn" onclick="switchUser('亦樂')">亦樂</button>
-            <button class="user-btn" onclick="switchUser('卡樂')">卡樂</button>
-        </div>
+        <h1>中二級跨學科自主測驗題庫</h1>
+        <div class="user-badge">使用者：卡樂</div>
     </header>
 
-    <div class="nav-tabs" id="学科Tabs"></div>
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('chinese')">中國語文 (1-20)</button>
+        <button class="tab-btn" onclick="switchTab('english')">英國語文 (21-40)</button>
+        <button class="tab-btn" onclick="switchTab('math')">數學科 (41-60)</button>
+        <button class="tab-btn" onclick="switchTab('science')">科學科 (61-80)</button>
+        <button class="tab-btn" onclick="switchTab('history')">歷史與綜合人文 (81-100)</button>
+    </div>
 
     <form id="quizForm">
-        <div id="quizContainer"></div>
+        <div id="chinese" class="quiz-section active"></div>
+
+        <div id="english" class="quiz-section"></div>
+
+        <div id="math" class="quiz-section"></div>
+
+        <div id="science" class="quiz-section"></div>
+
+        <div id="history" class="quiz-section"></div>
+
         <div class="actions">
             <button type="button" class="btn-submit" onclick="gradeQuiz()">提交測驗算分</button>
         </div>
@@ -233,291 +224,189 @@
 </div>
 
 <script>
-    const allUsersData = {
-        "晴晴": [
-            { id: 1, cat: "chinese", catName: "中國語文", q: "下表中「」內字詞意義相同的一組是：", o: ["去「國」懷鄉 / 「國」泰民安", "「或」異二者之為 / 或「躍」在淵", "把酒「臨」風 / 如臨「大」敵", "至若「春」和景明 / 「春」華秋實"], a: "C" },
-            { id: 2, cat: "chinese", catName: "中國語文", q: "下列文句中加底線成語使用正確的是哪一個？", o: ["這座雕塑栩栩如生，真可謂<u>巧奪天工</u>。", "他的演講精彩絕倫，台下觀眾<u>怨聲載道</u>。", "這篇小說結構混亂，叫人<u>賞心悅目</u>。", "他對工作認真負責，總是<u>敷衍了事</u>。"], a: "A" },
-            { id: 3, cat: "chinese", catName: "中國語文", q: "在《岳陽樓記》中，描述陰天景色時，哪句話形容了動物的動態？", o: ["陰風怒號，濁浪排空", "日星隱曜，山岳潛形", "商旅不行，檣傾楫摧", "沙鷗翔集，錦鱗游泳"], a: "D" },
-            { id: 4, cat: "chinese", catName: "中國語文", q: "「先天下之憂而憂，後天下之樂而樂」表現了作者怎樣的胸襟？", o: ["寄情山水", "憂國憂民、以天下為己任", "隨遇而安", "超然物外"], a: "B" },
-            { id: 5, cat: "chinese", catName: "中國語文", q: "下列哪一組詞語的字形完全正確？", o: ["刻苦耐勞 / 迫不急待", "走投無路 / 莫名其妙", "再接再勵 / 變本加厲", "浮想聯篇 / 執迷不悟"], a: "B" },
-            { id: 6, cat: "english", catName: "英國語文", q: "If I ________ you, I would take the job offer immediately.", o: ["am", "is", "was", "were"], a: "D" },
-            { id: 7, cat: "english", catName: "英國語文", q: "By the time the manager arrived, the issue ________ by the team.", o: ["has been resolved", "had been resolved", "was resolved", "is resolved"], a: "B" },
-            { id: 8, cat: "english", catName: "英國語文", q: "The old building, ________ was damaged in the storm, will be demolished.", o: ["who", "which", "whose", "where"], a: "B" },
-            { id: 9, cat: "english", catName: "英國語文", q: "Hardly had she entered the house ________ the phone rang.", o: ["than", "when", "then", "while"], a: "B" },
-            { id: 10, cat: "english", catName: "英國語文", q: "We are really looking forward to ________ you at the conference next month.", o: ["meet", "meeting", "met", "be meeting"], a: "B" },
-            { id: 11, cat: "math", catName: "數學科", q: "解方程：<span class='math-expr'>2x² - 5x - 3 = 0</span>", o: ["x = 3 或 x = -1/2", "x = -3 或 x = 1/2", "x = 3 或 x = 1/2", "x = -3 或 x = -1/2"], a: "A" },
-            { id: 12, cat: "math", catName: "數學科", q: "一個等比數列的首項是 3，公比是 2，求第六項的值。", o: ["48", "96", "192", "384"], a: "B" },
-            { id: 13, cat: "math", catName: "數學科", q: "已知一個圓的方程為 <span class='math-expr'>x² + y² - 4x + 6y - 3 = 0</span>，求該圓的半徑。", o: ["2", "3", "4", "16"], a: "C" },
-            { id: 14, cat: "math", catName: "數學科", q: "在三角形 ABC 中，若 a = 5, b = 7, 夾角 C = 60°，求三角形的面積。", o: ["35/2", "(35√3)/2", "35/4", "(35√3)/4"], a: "D" },
-            { id: 15, cat: "math", catName: "數學科", q: "袋中有 5 個紅球及 3 個黃球，隨機取出兩個球，求兩個都是紅球的概率。", o: ["5/14", "25/64", "15/56", "5/28"], a: "A" },
-            { id: 16, cat: "science", catName: "科學科", q: "下列哪一種器官主要負責人體內血液的過濾與排泄廢物（形成尿液）？", o: ["肝臟", "心臟", "腎臟", "肺部"], a: "C" },
-            { id: 17, cat: "science", catName: "科學科", q: "當光線從玻璃斜射入空氣中時，若入射角大於臨界角，會發生什麼現象？", o: ["完全折射", "全反射", "部分反射與部分折射", "光線消失"], a: "B" },
-            { id: 18, cat: "science", catName: "科學科", q: "化學反應中，加入催化劑（Catalyst）的主要作用是什麼？", o: ["增加生成物的產量", "提高反應物濃度", "降低反應的活化能以加快反應速率", "改變反應的平衡常數"], a: "C" },
-            { id: 19, cat: "science", catName: "科學科", q: "下列哪一項不是牛頓運動定律的內容？", o: ["慣性定律", "加速度定律", "作用力與反作用力定律", "萬有引力定律"], a: "D" },
-            { id: 20, cat: "science", catName: "科學科", q: "在生態系統中，真菌與細菌通常扮演什麼角色？", o: ["生產者", "初級消費者", "分解者", "高級消費者"], a: "C" },
-            { id: 21, cat: "history", catName: "歷史與人文", q: "第一次世界大戰的導火線是下列哪一個事件？", o: ["薩拉熱窩事件", "波士頓傾茶事件", "攻佔巴士底監獄", "盧溝橋事變"], a: "A" },
-            { id: 22, cat: "history", catName: "歷史與人文", q: "中國歷史上，哪一個朝代推行「科舉制度」來選拔官吏的起步（創立時期）？", o: ["漢朝", "隋朝", "唐朝", "宋朝"], a: "B" },
-            { id: 23, cat: "history", catName: "歷史與人文", q: "地理學中，香港屬於哪一種氣候類型？", o: ["熱帶雨林氣候", "溫帶季風氣候", "副熱帶季風/亞熱帶綠洲氣候", "亞熱帶季風氣候"], a: "D" },
-            { id: 24, cat: "history", catName: "歷史與人文", q: "歐洲中世紀歷史中，維繫社會結構與土地分封的核心制度是：", o: ["中央集權制", "封建制度", "民主共和制", "奴隸制"], a: "B" },
-            { id: 25, cat: "history", catName: "歷史與人文", q: "下列哪一個國際組織是為了維護世界和平與安全，於第二次世界大戰後成立的？", o: ["國際聯盟", "聯合國", "世界貿易組織", "亞太經合組織"], a: "B" }
-        ],
-        "立言": [
-            { id: 26, cat: "chinese", catName: "中國語文", q: "在《背影》一文中，父親跳下月台幫兒子買橘子的情節，主要表現了什麼？", o: ["父親身手敏捷", "火車站秩序混亂", "深沉而細膩的父愛", "兒子對父親的不滿"], a: "C" },
-            { id: 27, cat: "chinese", catName: "中國語文", q: "下列句子中，哪一個運用了「擬人」修辭手法？", o: ["太陽像個大火球高高掛在天空。", "小鳥在樹枝上快樂地歌唱。", "他的心碎成了一地玻璃。", "危樓高百尺，手可摘星辰。"], a: "B" },
-            { id: 28, cat: "english", catName: "英國語文", q: "He ran as fast as he could ________ he still missed the school bus.", o: ["but", "so", "because", "although"], a: "A" },
-            { id: 29, cat: "english", catName: "英國語文", q: "The pupils ________ to hand in their projects before Friday.", o: ["require", "are required", "requiring", "have required"], a: "B" },
-            { id: 30, cat: "math", catName: "數學科", q: "計算：<span class='math-expr'>3x(2x - 5) = </span>", o: ["6x² - 15", "6x² - 15x", "5x² - 15x", "6x - 5"], a: "B" },
-            { id: 31, cat: "math", catName: "數學科", q: "已知一個直角三角形的斜邊長為 13 cm，其中一條直角邊為 5 cm，求另一條直角邊的長度。", o: ["8 cm", "10 cm", "12 cm", "14 cm"], a: "C" },
-            { id: 32, cat: "science", catName: "科學科", q: "下列哪一種氣體能使帶火星的木條復燃？", o: ["二氧化碳", "氧氣", "氮氣", "氫氣"], a: "B" },
-            { id: 33, cat: "science", catName: "科學科", q: "植物進行光合作用的主要場所是細胞內的哪一個結構？", o: ["細胞核", "線粒體", "葉綠體", "液泡"], a: "C" },
-            { id: 34, cat: "history", catName: "歷史與人文", q: "歷史上著名的「絲綢之路」是在哪一個朝代大規模開闢的？", o: ["秦朝", "漢朝", "唐朝", "明朝"], a: "B" },
-            { id: 35, cat: "history", catName: "歷史與人文", q: "地球上由本初子午線（0°經線）向東和向西各劃分了多少度？", o: ["90°", "180°", "360°", "23.5°"], a: "B" }
-        ],
-        "允喬": [
-            { id: 36, cat: "chinese", catName: "中國語文", q: "「少壯不努力，老大徒傷悲」這句詩勸勉我們要怎樣？", o: ["珍惜時間，努力向上", "孝順父母", "愛護大自然", "結交益友"], a: "A" },
-            { id: 37, cat: "chinese", catName: "中國語文", q: "下列哪一個字常用來表示「數量多」的意思？", o: ["孤", "眾", "稀", "獨"], a: "B" },
-            { id: 38, cat: "english", catName: "英國語文", q: "There ________ some milk and apples in the refrigerator.", o: ["is", "are", "be", "am"], a: "A" },
-            { id: 39, cat: "english", catName: "英國語文", q: "Thank you for ________ me with my schoolwork.", o: ["help", "to help", "helping", "helped"], a: "C" },
-            { id: 40, cat: "math", catName: "數學科", q: "若一個正方形的周長是 24 cm，求它的面積。", o: ["24 cm²", "36 cm²", "48 cm²", "16 cm²"], a: "B" },
-            { id: 41, cat: "math", catName: "數學科", q: "計算：<span class='math-expr'>120 ÷ (4 + 2) × 3 = </span>", o: ["60", "10", "45", "15"], a: "A" },
-            { id: 42, cat: "science", catName: "科學科", q: "水由液態變成氣態（水蒸氣）的過程稱之為：", o: ["凝固", "熔化", "蒸發/汽化", "凝結"], a: "C" },
-            { id: 43, cat: "science", catName: "科學科", q: "下列哪一種動物不屬於哺乳類動物？", o: ["鯨魚", "蝙蝠", "海豚", "企鵝"], a: "D" },
-            { id: 44, cat: "history", catName: "歷史與人文", q: "端午節吃粽子、賽龍舟，是為了紀念哪位古代歷史人物？", o: ["孔子", "屈原", "司馬遷", "李白"], a: "B" },
-            { id: 45, cat: "history", catName: "歷史與人文", q: "世界上面積最大、人口最多的大洲是：", o: ["非洲", "歐洲", "亞洲", "北美洲"], a: "C" }
-        ],
-        "亦樂": [
-            { id: 46, cat: "chinese", catName: "中國語文", q: "小明把外套丟在梳發上。句中的「梳發」應訂正為哪個詞語？", o: ["梳化", "沙發", "梳頭髮", "沙發椅"], a: "B" },
-            { id: 47, cat: "chinese", catName: "中國語文", q: "反義詞對對碰：「成功」的相反詞是什麼？", o: ["勝利", "失敗", "平淡", "出眾"], a: "B" },
-            { id: 48, cat: "english", catName: "英國語文", q: "Listen! The baby ________ in the next room.", o: ["cries", "is crying", "cried", "has cried"], a: "B" },
-            { id: 49, cat: "english", catName: "英國語文", q: "This is ________ most interesting cartoon I have ever watched.", o: ["a", "an", "the", "(leave blank)"], a: "C" },
-            { id: 50, cat: "math", catName: "數學科", q: "一個三角形的底是 8 cm，高是 5 cm，求它的面積。", o: ["40 cm²", "20 cm²", "13 cm²", "10 cm²"], a: "B" },
-            { id: 51, cat: "math", catName: "數學科", q: "找出以下數組的中位數：3, 7, 5, 9, 4", o: ["5", "7", "5.6", "4"], a: "A" },
-            { id: 52, cat: "science", catName: "科學科", q: "我們平常看到月亮發光，是因為月亮反射了誰的光線？", o: ["地球", "太陽", "星星", "火星"], a: "B" },
-            { id: 53, cat: "science", catName: "科學科", q: "下列哪一項可以用來量度物體的溫度？", o: ["量筒", "天平", "溫度計", "時鐘"], a: "C" },
-            { id: 54, cat: "history", catName: "歷史與人文", q: "每年 10 月 1 日是中華人民共和國的：", o: ["勞動節", "青年節", "國慶節", "兒童節"], a: "C" },
-            { id: 55, cat: "history", catName: "歷史與人文", q: "香港在 1997 年 7 月 1 日回歸祖國，設立了什麼？", o: ["經濟特區", "特別行政區", "自治區", "直轄市"], a: "B" }
-        ],
-        "卡樂": [
-            // 中國語文 (1-20)
-            { id: 56, cat: "chinese", catName: "中國語文", q: "在文言文中，「去」字經常出現。請問下列哪一個句子中的「去」字解作「離開」？", o: ["骨肉相殘，何其悲也，汝去之", "暮去朝來顏色故", "拔刃欲起，起而卒去", "停數日，辭去"], a: "D" },
-            { id: 57, cat: "chinese", catName: "中國語文", q: "「微風過去，送來屢屢清香，彷彿遠處高樓上緲茫的歌聲似的。」這句話運用了哪一種修辭手法？", o: ["比擬", "通感", "借代", "誇張"], a: "B" },
-            { id: 58, cat: "chinese", catName: "中國語文", q: "下列哪一組詞語的讀音完全正確？", o: ["咀嚼（jǔ jué） / 蹣跚（pán shān）", "惋惜（wǎn xī） / 玷污（zhān wū）", "倔強（jué jiàng） / 豐腴（fēng yú）", "驚惶（jīng huáng） / 差使（chāi suí）"], a: "C" },
-            { id: 59, cat: "chinese", catName: "中國語文", q: "「這項新政策推出後，市民的意見紛紜，莫衷一是。」句中「莫衷一是」的意思是什麼？", o: ["大家一致贊同", "不能得出一致的結論", "事情非常危急", "答案非常明顯"], a: "B" },
-            { id: 60, cat: "chinese", catName: "中國語文", q: "下列哪一個句子沒有語病？", o: ["通過這次露營活動，使同學們的自理能力得到了提高。", "能否保持良好的心態，是考試取得好成績的關鍵。", "為了防止各類交通事故不再發生，學校加強了安全教育。", "閱讀優秀的文學作品，不僅能增長知識，還能陶冶情操。"], a: "D" },
-            { id: 61, cat: "chinese", catName: "中國語文", q: "「問君能有幾多愁？恰似一江春水向東流。」這兩句詩運用了什麼修辭手法？", o: ["設問、比喻", "反問、誇張", "設問、擬人", "反問、對偶"], a: "A" },
-            { id: 62, cat: "chinese", catName: "中國語文", q: "在文言文《桃花源記》中，「便要還家」的「要」字是什麼意思？", o: ["需要", "應要", "通「邀」，邀請", "主要"], a: "C" },
-            { id: 63, cat: "chinese", catName: "中國語文", q: "「他平日不務正業，這次考試作弊被抓，完全是＿＿＿＿，怪不得別人。」橫線上填入哪個成語最適當？", o: ["物理取鬧", "怨天尤人", "既往不咎", "順理成章", "咎由自取"], a: "E" },
-            { id: 64, cat: "chinese", catName: "中國語文", q: "下列哪一首詩屬於「送別詩」？", o: ["國破山河在，城春草木深。", "海內存知己，天涯若比鄰。", "遠上寒山石徑斜，白雲生處有人家。", "舉頭望明月，低頭思故鄉。"], a: "B" },
-            { id: 65, cat: "chinese", catName: "中國語文", q: "下列各組句子中，加底線字的意思相同的一組是：", o: ["策之不以其道 / 得道多助", "執策而臨之 / 鳴之而不能通其意", "食馬者不知其能千里而食也 / 食不飽，力不足", "雖有千里之能 / 雖人有百手"], a: "D" },
-            { id: 66, cat: "chinese", catName: "中國語文", q: "「這座新落成的圖書館建築宏偉，設計＿＿＿，吸引不少建築師前來參觀。」橫線上填入哪個詞語最適當？", o: ["別具一格", "班門弄斧", "粗製濫造", "千篇一律"], a: "A" },
-            { id: 67, cat: "chinese", catName: "中國語文", q: "下列哪一個句子的標點符號使用完全正確？", o: ["老師說：「明天我們要去博物館，請大家準時集合」？", "我不知道他今天為什麼沒有來？", "桃樹、杏樹、梨樹，你不讓我，我不讓你，都開滿了花趕趟兒。", "這裡風景優美：有高山、有流水、還有森林。"], a: "C" },
-            { id: 68, cat: "chinese", catName: "中國語文", q: "「孤帆遠影碧空盡，唯見長江天際流。」這兩句詩中「孤帆」運用了什麼修辭手法？", o: ["借喻", "借代", "擬人", "對偶"], a: "B" },
-            { id: 69, cat: "chinese", catName: "中國語文", q: "下列哪一個字不是形聲字？", o: ["媽", "江", "休", "鳴"], a: "C" },
-            { id: 70, cat: "chinese", catName: "中國語文", q: "「他那種不畏艱難的精神，值得我們學習和發揚。」這句話中的「發揚」與下列哪個詞語搭配最適當？", o: ["傳統", "錯誤", "缺點", "成績"], a: "A" },
-            { id: 71, cat: "chinese", catName: "中國語文", q: "下列文言字詞解釋，哪一個是錯誤的？", o: ["會賓客大宴：「會」解作正值、適逢", "兩股戰戰：「股」解作大腿", "賓客意少舒：「少」解作很少", "雖人有百手：「雖」解作即使"], a: "C" },
-            { id: 72, cat: "chinese", catName: "中國語文", q: "「小明在演講比賽中表現出色，獲得了全場觀眾的＿＿＿＿。」橫線上填入哪個詞語最適當？", o: ["喝彩", "批評", "諷刺", "懷疑"], a: "A" },
-            { id: 73, cat: "chinese", catName: "中國語文", q: "「他向來一諾千金，只要答應了的事就一定會做到。」句中「一諾千金」用來形容什麼？", o: ["說話很有分量", "說話非常守信用", "承諾需要很多金錢", "說話聲音宏亮"], a: "B" },
-            { id: 74, cat: "chinese", catName: "中國語文", q: "「自古逢秋悲寂寥，我言秋日勝春朝。」這兩句詩表達了詩人怎樣的心境？", o: ["悲傷憂鬱", "孤獨無助", "樂觀豁達", "思念故鄉"], a: "C" },
-            { id: 75, cat: "chinese", catName: "中國語文", q: "下列各句中，沒有使用比喻修辭手法的一句是：", o: ["遠處的霓虹燈亮了，像一道彩虹降落人間。", "他的心思真難猜，像天氣一樣說變就變。", "看著這張照片，我彷彿回到了童年快樂的時光。", "祖國是哺育我們成長的母親。"], a: "C" },
+    // 完整的 100 題數據結構
+    const quizData = [
+        // 中國語文
+        { id: 1, cat: "chinese", q: "在文言文中，「去」字經常出現。請問下列哪一個句子中的「去」字解作「離開」？", o: ["骨肉相殘，何其悲也，汝去之", "暮去朝來顏色故", "拔刃欲起，起而卒去", "停數日，辭去"], a: "D" },
+        { id: 2, cat: "chinese", q: "「微風過去，送來屢屢清香，彷彿遠處高樓上緲茫的歌聲似的。」這句話運用了哪一種修辭手法？", o: ["比擬", "通感", "借代", "誇張"], a: "B" },
+        { id: 3, cat: "chinese", q: "下列哪一組詞語的讀音完全正確？", o: ["咀嚼（jǔ jué） / 蹣跚（pán shān）", "惋惜（wǎn xī） / 玷污（zhān wū）", "倔強（jué jiàng） / 豐腴（fēng yú）", "驚惶（jīng huáng） / 差使（chāi suí）"], a: "C" },
+        { id: 4, cat: "chinese", q: "「這項新政策推出後，市民的意見紛紜，莫衷一是。」句中「莫衷一是」的意思是什麼？", o: ["大家一致贊同", "不能得出一致的結論", "事情非常危急", "答案非常明顯"], a: "B" },
+        { id: 5, cat: "chinese", q: "下列哪一個句子沒有語病？", o: ["通過這次露營活動，使同學們的自理能力得到了提高。", "能否保持良好的心態，是考試取得好成績的關鍵。", "為了防止各類交通事故不再發生，學校加強了安全教育。", "閱讀優秀的文學作品，不僅能增長知識，還能陶冶情操。"], a: "D" },
+        { id: 6, cat: "chinese", q: "「問君能有幾多愁？恰似一江春水向東流。」這兩句詩運用了什麼修辭手法？", o: ["設問、比喻", "反問、誇張", "設問、擬人", "反問、對偶"], a: "A" },
+        { id: 7, cat: "chinese", q: "在文言文《桃花源記》中，「便要還家」的「要」字是什麼意思？", o: ["需要", "應要", "通「邀」，邀請", "主要"], a: "C" },
+        { id: 8, cat: "chinese", q: "「他平日不務正業，這次考試作弊被抓，完全是＿＿＿＿，怪不得別人。」橫線上填入哪個成語最適當？", o: ["咎由自取", "怨天尤人", "既往不咎", "順理成章"], a: "A" },
+        { id: 9, cat: "chinese", q: "下列哪一首詩屬於「送別詩」？", o: ["國破山河在，城春草木深。", "海內存知己，天涯若比鄰。", "遠上寒山石徑斜，白雲生處有人家。", "舉頭望明月，低頭思故鄉。"], a: "B" },
+        { id: 10, cat: "chinese", q: "下列各組句子中，加底線字的意思相同的一組是：", o: ["策之不以其道 / 得道多助", "執策而臨之 / 鳴之而不能通其意", "食馬者不知其能千里而食也 / 食不飽，力不足", "雖有千里之能 / 雖人有百手"], a: "D" },
+        { id: 11, cat: "chinese", q: "「這座新落成的圖書館建築宏偉，設計＿＿＿，吸引不少建築師前來參觀。」橫線上填入哪個詞語最適當？", o: ["別具一格", "班門弄斧", "粗製濫造", "千篇一律"], a: "A" },
+        { id: 12, cat: "chinese", q: "下列哪一個句子的標點符號使用完全正確？", o: ["老師說：「明天我們要去博物館，請大家準時集合」？", "我不知道他今天為什麼沒有來？", "桃樹、杏樹、梨樹，你不讓我，我不讓你，都開滿了花趕趟兒。", "這裡風景優美：有高山、有流水、還有森林。"], a: "C" },
+        { id: 13, cat: "chinese", q: "「孤帆遠影碧空盡，唯見長江天際流。」這兩句詩中「孤帆」運用了什麼修辭手法？", o: ["借喻", "借代", "擬人", "對偶"], a: "B" },
+        { id: 14, cat: "chinese", q: "下列哪一個字不是形聲字？", o: ["媽", "江", "休", "鳴"], a: "C" },
+        { id: 15, cat: "chinese", q: "「他那種不畏艱難的精神，值得我們學習和發揚。」這句話中的「發揚」與下列哪個詞語搭配最適當？", o: ["傳統", "錯誤", "缺點", "成績"], a: "A" },
+        { id: 16, cat: "chinese", q: "下列文言字詞解釋，哪一個是錯誤的？", o: ["會賓客大宴：「會」解作正值、適逢", "兩股戰戰：「股」解作大腿", "賓客意少舒：「少」解作很少", "雖人有百手：「雖」解作即使"], a: "C" },
+        { id: 17, cat: "chinese", q: "「小明在演講比賽中表現出色，獲得了全場觀眾的＿＿＿＿。」橫線上填入哪個詞語最適當？", o: ["喝彩", "批評", "諷刺", "懷疑"], a: "A" },
+        { id: 18, cat: "chinese", q: "「他向來一諾千金，只要答應了的事就一定會做到。」句中「一諾千金」用來形容什麼？", o: ["說話很有分量", "說話非常守信用", "承諾需要很多金錢", "說話聲音宏亮"], a: "B" },
+        { id: 19, cat: "chinese", q: "「自古逢秋悲寂寥，我言秋日勝春朝。」這兩句詩表達了詩人怎樣的心境？", o: ["悲傷憂鬱", "孤獨無助", "樂觀豁達", "思念故鄉"], a: "C" },
+        { id: 20, cat: "chinese", q: "下列各句中，沒有使用比喻修辭手法的一句是：", o: ["遠處的霓虹燈亮了，像一道彩虹降落人間。", "他的心思真難猜，像天氣一樣說變就變。", "看著這張照片，我彷彿回到了童年快樂的時光。", "祖國是哺育我們成長的母親。"], a: "C" },
 
-            // 英國語文 (21-40)
-            { id: 76, cat: "english", catName: "英國語文", q: "If it ________ tomorrow, we will cancel the picnic.", o: ["rain", "rains", "will rain", "is raining"], a: "B" },
-            { id: 77, cat: "english", catName: "英國語文", q: "By the time the police arrived, the thief ________ away.", o: ["has run", "ran", "had run", "was running"], a: "C" },
-            { id: 78, cat: "english", catName: "英國語文", q: "This is the castle ________ was built in the 14th century.", o: ["who", "which", "whose", "where"], a: "B" },
-            { id: 79, cat: "english", catName: "英國語文", q: "The window ________ by the boys while they were playing football yesterday.", o: ["broke", "was broken", "has broken", "is broken"], a: "B" },
-            { id: 80, cat: "english", catName: "英國語文", q: "My sister is very keen ________ playing the piano. She practices every day.", o: ["in", "at", "on", "with"], a: "C" },
-            { id: 81, cat: "english", catName: "英國語文", q: "I don't mind ________ the dishes, but I hate ironing clothes.", o: ["wash", "to wash", "washing", "washed"], a: "C" },
-            { id: 82, cat: "english", catName: "英國語文", q: "Although he was very tired, ________ he kept on running to finish the race.", o: ["but", "yet", "so", "(leave blank)"], a: "D" },
-            { id: 83, cat: "english", catName: "英國語文", q: "The doctor advised Tom ________ smoking for his health.", o: ["give up", "to give up", "giving up", "gave up"], a: "B" },
-            { id: 84, cat: "english", catName: "英國語文", q: "She didn't go to the party, and ________ did her brother.", o: ["so", "neither", "either", "not"], a: "B" },
-            { id: 85, cat: "english", catName: "英國語文", q: "The weather was ________ cold that the lake froze over.", o: ["too", "very", "so", "such"], a: "C" },
-            { id: 86, cat: "english", catName: "英國語文", q: "Choose the word that has a SIMILAR meaning to \"generous\".", o: ["Kind and willing to give", "Selfish and mean", "Lazy and quiet", "Famous and rich"], a: "A" },
-            { id: 87, cat: "english", catName: "英國語文", q: "The school sports day has been ________ until next Friday due to bad weather.", o: ["put off", "put on", "put up", "put out"], a: "A" },
-            { id: 88, cat: "english", catName: "英國語文", q: "Mr. Chan, ________ daughter is an artist, lives next door to us.", o: ["who", "whom", "whose", "which"], a: "C" },
-            { id: 89, cat: "english", catName: "英國語文", q: "I ________ a book when suddenly the lights went out last night.", o: ["read", "am reading", "was reading", "have read"], a: "C" },
-            { id: 90, cat: "english", catName: "英國語文", q: "You ________ finish your homework before you can watch television.", o: ["must", "may", "can", "might"], a: "A" },
-            { id: 91, cat: "english", catName: "英國語文", q: "Which of the following suffixes can be added to \"excite\" to make it a noun?", o: ["-ly", "-ment", "-ful", "-able"], a: "B" },
-            { id: 92, cat: "english", catName: "英國語文", q: "The noise from the street is preventing me ________ concentrating on my studies.", o: ["from", "to", "with", "for"], a: "A" },
-            { id: 93, cat: "english", catName: "英國語文", q: "Technology has ________ changed the way we communicate with each other.", o: ["signify", "significant", "significantly", "significance"], a: "C" },
-            { id: 94, cat: "english", catName: "英國語文", q: "I am looking forward to ________ you at the graduation ceremony.", o: ["see", "seeing", "seen", "saw"], a: "B" },
-            { id: 95, cat: "english", catName: "英國語文", q: "Peter rarely goes to the cinema, ________ he?", o: ["does", "doesn't", "is", "isn't"], a: "A" },
+        // 英國語文
+        { id: 21, cat: "english", q: "If it ________ tomorrow, we will cancel the picnic.", o: ["rain", "rains", "will rain", "is raining"], a: "B" },
+        { id: 22, cat: "english", q: "By the time the police arrived, the thief ________ away.", o: ["has run", "ran", "had run", "was running"], a: "C" },
+        { id: 23, cat: "english", q: "This is the castle ________ was built in the 14th century.", o: ["who", "which", "whose", "where"], a: "B" },
+        { id: 24, cat: "english", q: "The window ________ by the boys while they were playing football yesterday.", o: ["broke", "was broken", "has broken", "is broken"], a: "B" },
+        { id: 25, cat: "english", q: "My sister is very keen ________ playing the piano. She practices every day.", o: ["in", "at", "on", "with"], a: "C" },
+        { id: 26, cat: "english", q: "I don't mind ________ the dishes, but I hate ironing clothes.", o: ["wash", "to wash", "washing", "washed"], a: "C" },
+        { id: 27, cat: "english", q: "Although he was very tired, ________ he kept on running to finish the race.", o: ["but", "yet", "so", "(leave blank)"], a: "D" },
+        { id: 28, cat: "english", q: "The doctor advised Tom ________ smoking for his health.", o: ["give up", "to give up", "giving up", "gave up"], a: "B" },
+        { id: 29, cat: "english", q: "She didn't go to the party, and ________ did her brother.", o: ["so", "neither", "either", "not"], a: "B" },
+        { id: 30, cat: "english", q: "The weather was ________ cold that the lake froze over.", o: ["too", "very", "so", "such"], a: "C" },
+        { id: 31, cat: "english", q: "Choose the word that has a SIMILAR meaning to \"generous\".", o: ["Kind and willing to give", "Selfish and mean", "Lazy and quiet", "Famous and rich"], a: "A" },
+        { id: 32, cat: "english", q: "The school sports day has been ________ until next Friday due to bad weather.", o: ["put off", "put on", "put up", "put out"], a: "A" },
+        { id: 33, cat: "english", q: "Mr. Chan, ________ daughter is an artist, lives next door to us.", o: ["who", "whom", "whose", "which"], a: "C" },
+        { id: 34, cat: "english", q: "I ________ a book when suddenly the lights went out last night.", o: ["read", "am reading", "was reading", "have read"], a: "C" },
+        { id: 35, cat: "english", q: "You ________ finish your homework before you can watch television.", o: ["must", "may", "can", "might"], a: "A" },
+        { id: 36, cat: "english", q: "Which of the following suffixes can be added to \"excite\" to make it a noun?", o: ["-ly", "-ment", "-ful", "-able"], a: "B" },
+        { id: 37, cat: "english", q: "The noise from the street is preventing me ________ concentrating on my studies.", o: ["from", "to", "with", "for"], a: "A" },
+        { id: 38, cat: "english", q: "Technology has ________ changed the way we communicate with each other.", o: ["signify", "significant", "significantly", "significance"], a: "C" },
+        { id: 39, cat: "english", q: "I am looking forward to ________ you at the graduation ceremony.", o: ["see", "seeing", "seen", "saw"], a: "B" },
+        { id: 40, cat: "english", q: "Peter rarely goes to the cinema, ________ he?", o: ["does", "doesn't", "is", "isn't"], a: "A" },
 
-            // 數學科 (41-60)
-            { id: 96, cat: "math", catName: "數學科", q: "化簡：<span class='math-expr'>3x - 2(x - 4) = </span> ？", o: ["x - 8", "x + 8", "5x - 8", "5x + 8"], a: "B" },
-            { id: 97, cat: "math", catName: "數學科", q: "解聯立方程：<span class='math-expr'>x + y = 7</span> 且 <span class='math-expr'>2x - y = 2</span>。 則 <span class='math-expr'>x = </span> ？", o: ["2", "3", "4", "5"], a: "B" },
-            { id: 98, cat: "math", catName: "數學科", q: "因式分解：<span class='math-expr'>x² - 9 = </span> ？", o: ["(x - 3)²", "(x + 3)¹", "(x - 3)(x + 3)", "x(x - 9)"], a: "C" },
-            { id: 99, cat: "math", catName: "數學科", q: "某商品原價 $500，現加價 20% 後再打八折（即減價 20%）出售，現售價是多少？", o: ["$500", "$480", "$460", "$400"], a: "B" },
-            { id: 100, cat: "math", catName: "數學科", q: "一個直角三角形的兩條直角邊長分別是 6 cm 和 8 cm，求斜邊的長度。", o: ["10 cm", "12 cm", "14 cm", "100 cm"], a: "A" },
-            { id: 101, cat: "math", catName: "數學科", q: "如果一個多邊形的內角和是 540°，這個多邊形有多少條邊？", o: ["4", "5", "6", "7"], a: "B" },
-            { id: 102, cat: "math", catName: "數學科", q: "已知 y 隨 x 正比例。當 x = 3 時，y = 12。當 x = 5 時，y 的值是多少？", o: ["15", "20", "24", "30"], a: "B" },
-            { id: 103, cat: "math", catName: "數學科", q: "計算：<span class='math-expr'>(-2)³ × (-3)² = </span> ？", o: ["72", "-72", "54", "-54"], a: "B" },
-            { id: 104, cat: "math", catName: "數學科", q: "一個圓形的半徑增加一倍，它的面積會增加多少倍？", o: ["1 倍", "2 倍", "3 倍", "4 倍"], a: "C" },
-            { id: 105, cat: "math", catName: "數學科", q: "解方程：<span class='math-expr'>(2x - 1) / 3 = 5</span>，則 <span class='math-expr'>x = </span> ？", o: ["7", "8", "9", "16"], a: "B" },
-            { id: 106, cat: "math", catName: "數學科", q: "下列哪一組數組成的長度不能構成一個三角形？", o: ["3, 4, 5", "5, 12, 13", "2, 3, 6", "7, 8, 9"], a: "C" },
-            { id: 107, cat: "math", catName: "數學科", q: "袋子裡有 3 個紅球、4 個藍球和 5 個綠球。隨機摸出一個球，摸到藍球的概率是多少？", o: ["1/3", "1/4", "1/12", "4/5"], a: "A" },
-            { id: 108, cat: "math", catName: "數學科", q: "一個長方體的長、闊、高分別是 5 cm、4 cm、3 cm，求它的總表面面積。", o: ["60 cm²", "94 cm²", "47 cm²", "120 cm²"], a: "B" },
-            { id: 109, cat: "math", catName: "數學科", q: "化簡估算式：<span class='math-expr'>√48 + √12 = </span> ？", o: ["√60", "6√3", "4√3", "2√3"], a: "B" },
-            { id: 110, cat: "math", catName: "數學科", q: "點 A(-3, 4) 關於 x 軸反射後的影像點坐標是什麼？", o: ["(3, 4)", "(-3, -4)", "(3, -4)", "(4, -3)"], a: "B" },
-            { id: 111, cat: "math", catName: "數學科", q: "數列前四項為 1, 4, 9, 16，請問第 n 項的通項公式是什麼？", o: ["2n", "n + 3", "n²", "2ⁿ"], a: "C" },
-            { id: 112, cat: "math", catName: "數學科", q: "某班有 40 名學生，其中男生的百分比是 45%，求該班有多少名女學生？", o: ["18", "22", "20", "25"], a: "B" },
-            { id: 113, cat: "math", catName: "數學科", q: "設 a : b = 2 : 3，b : c = 4 : 5，求 a : b : c。", o: ["2 : 4 : 5", "8 : 12 : 15", "6 : 9 : 10", "8 : 9 : 15"], a: "B" },
-            { id: 114, cat: "math", catName: "數學科", q: "已知一個扇形的半徑為 6 cm，圓心角為 60°，求該扇形的弧長（答案以 π 表示）。", o: ["2π cm", "4π cm", "6π cm", "π cm"], a: "A" },
-            { id: 115, cat: "math", catName: "數學科", q: "一條直線的方程為 <span class='math-expr'>2x + y - 4 = 0</span>，這條直線在 y 軸上的截距（y-intercept）是多少？", o: ["2", "-4", "4", "-2"], a: "C" },
+        // 數學科
+        { id: 41, cat: "math", q: "化簡：<span class='math-expr'>3x - 2(x - 4) = </span> ？", o: ["x - 8", "x + 8", "5x - 8", "5x + 8"], a: "B" },
+        { id: 42, cat: "math", q: "解聯立方程：<span class='math-expr'>x + y = 7</span> 且 <span class='math-expr'>2x - y = 2</span>。 則 <span class='math-expr'>x = </span> ？", o: ["2", "3", "4", "5"], a: "B" },
+        { id: 43, cat: "math", q: "因式分解：<span class='math-expr'>x² - 9 = </span> ？", o: ["(x - 3)²", "(x + 3)¹", "(x - 3)(x + 3)", "x(x - 9)"], a: "C" },
+        { id: 44, cat: "math", q: "某商品原價 $500，現加價 20% 後再打八折（即減價 20%）出售，現售價是多少？", o: ["$500", "$480", "$460", "$400"], a: "B" },
+        { id: 45, cat: "math", q: "一個直角三角形的兩條直角邊長分別是 6 cm 和 8 cm，求斜邊的長度。", o: ["10 cm", "12 cm", "14 cm", "100 cm"], a: "A" },
+        { id: 46, cat: "math", q: "如果一個多邊形的內角和是 540°，這個多邊形有多少條邊？", o: ["4", "5", "6", "7"], a: "B" },
+        { id: 47, cat: "math", q: "已知 y 隨 x 正比例。當 x = 3 時，y = 12。當 x = 5 時，y 的值是多少？", o: ["15", "20", "24", "30"], a: "B" },
+        { id: 48, cat: "math", q: "計算：<span class='math-expr'>(-2)³ × (-3)² = </span> ？", o: ["72", "-72", "54", "-54"], a: "B" },
+        { id: 49, cat: "math", q: "一個圓形的半徑增加一倍，它的面積會增加多少倍？", o: ["1 倍", "2 倍", "3 倍", "4 倍"], a: "C" },
+        { id: 50, cat: "math", q: "解方程：<span class='math-expr'>(2x - 1) / 3 = 5</span>，則 <span class='math-expr'>x = </span> ？", o: ["7", "8", "9", "16"], a: "B" },
+        { id: 51, cat: "math", q: "下列哪一組數組成的長度不能構成一個三角形？", o: ["3, 4, 5", "5, 12, 13", "2, 3, 6", "7, 8, 9"], a: "C" },
+        { id: 52, cat: "math", q: "袋子裡有 3 個紅球、4 個藍球和 5 個綠球。隨機摸出一個球，摸到藍球的概率是多少？", o: ["1/3", "1/4", "1/12", "4/5"], a: "A" },
+        { id: 53, cat: "math", q: "一個長方體的長、闊、高分別是 5 cm、4 cm、3 cm，求它的總表面面積。", o: ["60 cm²", "94 cm²", "47 cm²", "120 cm²"], a: "B" },
+        { id: 54, cat: "math", q: "化簡估算式：<span class='math-expr'>√48 + √12 = </span> ？", o: ["√60", "6√3", "4√3", "2√3"], a: "B" },
+        { id: 55, cat: "math", q: "點 A(-3, 4) 關於 x 軸反射後的影像點坐標是什麼？", o: ["(3, 4)", "(-3, -4)", "(3, -4)", "(4, -3)"], a: "B" },
+        { id: 56, cat: "math", q: "數列前四項為 1, 4, 9, 16，請問第 n 項的通項公式是什麼？", o: ["2n", "n + 3", "n²", "2ⁿ"], a: "C" },
+        { id: 57, cat: "math", q: "某班有 40 名學生，其中男生的百分比是 45%，求該班有多少名女學生？", o: ["18", "22", "20", "25"], a: "B" },
+        { id: 58, cat: "math", q: "設 a : b = 2 : 3，b : c = 4 : 5，求 a : b : c。", o: ["2 : 4 : 5", "8 : 12 : 15", "6 : 9 : 10", "8 : 9 : 15"], a: "B" },
+        { id: 59, cat: "math", q: "已知一個扇形的半徑為 6 cm，圓心角為 60°，求該扇形的弧長（答案以 π 表示）。", o: ["2π cm", "4π cm", "6π cm", "π cm"], a: "A" },
+        { id: 60, cat: "math", q: "一條直線的方程為 <span class='math-expr'>2x + y - 4 = 0</span>，這條直線在 y 軸上的截距（y-intercept）是多少？", o: ["2", "-4", "4", "-2"], a: "C" },
 
-            // 科學科 (61-80)
-            { id: 116, cat: "science", catName: "科學科", q: "當光線從空氣斜射入水中時，會發生折射現象。折射光線會怎樣變化？", o: ["偏離法線", "偏向法線", "方向保持不變", "完全被反射回來"], a: "B" },
-            { id: 117, cat: "science", catName: "科學科", q: "下列哪一種細胞結構是植物細胞有，而動物細胞沒有的？", o: ["細胞核", "細胞膜", "細胞壁", "線粒體"], a: "C" },
-            { id: 118, cat: "science", catName: "科學科", q: "水的化學式是 H₂O，這代表一個水分子中含有什麼？", o: ["1個氫原子和2個氧原子", "2個氫原子和1個氧原子", "2個氫元素和1個氧元素", "1個氫分子和2個氧分子"], a: "B" },
-            { id: 119, cat: "science", catName: "科學科", q: "在力學中，當物體受到的合力（Net force）為零時，物體會怎樣？", o: ["一定保持靜止", "一定做勻速直線運動", "保持靜止或做勻速直線運動", "加速運動"], a: "C" },
-            { id: 120, cat: "science", catName: "科學科", q: "元素週期表中，符號「Na」代表哪一種元素？", o: ["氮", "氖", "鈉", "鎂"], a: "C" },
-            { id: 121, cat: "science", catName: "科學科", q: "人體內負責運送氧氣的主要細胞是什麼？", o: ["白血球", "紅血球", "血小板", "神經細胞"], a: "B" },
-            { id: 122, cat: "science", catName: "科學科", q: "重量與質量不同。如果把一個物體送到月球上，它的質量 and 重量會如何變化？", o: ["質量不變，重量減少", "質量減少，重量不變", "質量和重量都減少", "質量和重量都不變"], a: "A" },
-            { id: 123, cat: "science", catName: "科學科", q: "聲音在下列哪一種介質中的傳播速度最快？", o: ["空氣", "水", "鋼鐵（固體）", "真空"], a: "C" },
-            { id: 124, cat: "science", catName: "科學科", q: "生活中常見的「胃酸倒流」可以用含鹼性物質的胃藥來緩解，這屬於哪種化學反應？", o: ["燃燒反應", "中和反應", "沉澱反應", "分解反應"], a: "B" },
-            { id: 125, cat: "science", catName: "科學科", q: "人體呼吸系統中，氣體交換（吸入氧氣、排出二氧化碳）的主要部位在哪裡？", o: ["氣管", "支氣管", "肺泡", "鼻腔"], a: "C" },
-            { id: 126, cat: "science", catName: "科學科", q: "下列哪一種能量轉換過程出現於「植物進行光合作用」時？", o: ["化學能轉化為光能", "光能轉化為化學能", "熱能轉化為化學能", "動能轉化為電能"], a: "B" },
-            { id: 127, cat: "science", catName: "科學科", q: "轉動開啟瓶蓋時，我們使用的簡單機械原理主要是：", o: ["槓桿", "斜面", "輪軸", "滑輪"], a: "C" },
-            { id: 128, cat: "science", catName: "科學科", q: "實驗室中，如果需要量度液體的準確體積，應該選用以下哪種儀器？", o: ["燒杯", "量筒", "錐形瓶", "試管"], a: "B" },
-            { id: 129, cat: "science", catName: "科學科", q: "下列哪一種化學物質是引起大氣環境「溫室效應」的主要氣體？", o: ["氧氣", "二氧化碳", "氮氣", "氦氣"], a: "B" },
-            { id: 130, cat: "science", catName: "科學科", q: "當我們把藍色石蕊試紙放入一種未知溶液中，試紙變成了紅色，這說明該溶液呈什麼性？", o: ["酸性", "鹼性", "中性", "難以確定"], a: "A" },
-            { id: 131, cat: "science", catName: "科學科", q: "食物中的蛋白質主要在人體的哪一個器官開始被化學消化？", o: ["口腔", "胃", "大腸", "食道"], a: "B" },
-            { id: 132, cat: "science", catName: "科學科", q: "在電路中，用來量度電流強度的儀器叫做安培計（Ammeter），它應該如何連接到電路中？", o: ["串聯", "並聯", "混聯", "任意連接"], a: "A" },
-            { id: 133, cat: "science", catName: "科學科", q: "物質由固態直接轉變成氣態的過程稱之為什麼？", o: ["熔化", "汽化", "昇華", "凝華"], a: "C" },
-            { id: 134, cat: "science", catName: "科學科", q: "生態系統中的食物鏈通常是以什麼作為起點的？", o: ["初級消費者（食草動物）", "次級消費者（食肉動物）", "生產者（綠色植物）", "分解者（細菌和真菌）"], a: "C" },
-            { id: 135, cat: "science", catName: "科學科", q: "一個物體的質量是 2 kg，當它受到 6 N 的合力時，其加速度是多少？（提示：F = ma）", o: ["3 m/s²", "12 m/s²", "4 m/s²", "0.33 m/s²"], a: "A" },
+        // 科學科
+        { id: 61, cat: "science", q: "當光線從空氣斜射入水中時，會發生折射現象。折射光線會怎樣變化？", o: ["偏離法線", "偏向法線", "方向保持不變", "完全被反射回來"], a: "B" },
+        { id: 62, cat: "science", q: "下列哪一種細胞結構是植物細胞有，而動物細胞沒有的？", o: ["細胞核", "細胞膜", "細胞壁", "線粒體"], a: "C" },
+        { id: 63, cat: "science", q: "水的化學式是 H₂O，這代表一個水分子中含有什麼？", o: ["1個氫原子和2個氧原子", "2個氫原子和1個氧原子", "2個氫元素和1個氧元素", "1個氫分子和2個氧分子"], a: "B" },
+        { id: 64, cat: "science", q: "在力學中，當物體受到的合力（Net force）為零時，物體會怎樣？", o: ["一定保持靜止", "一定做勻速直線運動", "保持靜止或做勻速直線運動", "加速運動"], a: "C" },
+        { id: 65, cat: "science", q: "元素週期表中，符號「Na」代表哪一種元素？", o: ["氮", "氖", "鈉", "鎂"], a: "C" },
+        { id: 66, cat: "science", q: "人體內負責運送氧氣的主要細胞是什麼？", o: ["白血球", "紅血球", "血小板", "神經細胞"], a: "B" },
+        { id: 67, cat: "science", q: "重量與質量不同。如果把一個物體送到月球上，它的質量和重量會如何變化？", o: ["質量不變，重量減少", "質量減少，重量不變", "質量和重量都減少", "質量和重量都不變"], a: "A" },
+        { id: 68, cat: "science", q: "聲音在下列哪一種介質中的傳播速度最快？", o: ["空氣", "水", "鋼鐵（固體）", "真空"], a: "C" },
+        { id: 69, cat: "science", q: "生活中常見的「胃酸倒流」可以用含鹼性物質的胃藥來緩解，這屬於哪種化學反應？", o: ["燃燒反應", "中和反應", "沉澱反應", "分解反應"], a: "B" },
+        { id: 70, cat: "science", q: "人體呼吸系統中，氣體交換（吸入氧氣、排出二氧化碳）的主要部位在哪裡？", o: ["氣管", "支氣管", "肺泡", "鼻腔"], a: "C" },
+        { id: 71, cat: "science", q: "下列哪一種能量轉換過程出現在「植物進行光合作用」時？", o: ["化學能轉化為光能", "光能轉化為化學能", "熱能轉化為化學能", "動能轉化為電能"], a: "B" },
+        { id: 72, cat: "science", q: "轉動開啟瓶蓋時，我們使用的簡單機械原理主要是：", o: ["槓桿", "斜面", "輪軸", "滑輪"], a: "C" },
+        { id: 73, cat: "science", q: "實驗室中，如果需要量度液體的準確體積，應該選用以下哪種儀器？", o: ["燒杯", "量筒", "錐形瓶", "試管"], a: "B" },
+        { id: 74, cat: "science", q: "下列哪一種化學物質是引起大氣環境「溫室效應」的主要氣體？", o: ["氧氣", "二氧化碳", "氮氣", "氦氣"], a: "B" },
+        { id: 75, cat: "science", q: "當我們把藍色石蕊試紙放入一種未知溶液中，試紙變成了紅色，這說明該溶液呈什麼性？", o: ["酸性", "鹼性", "中性", "難以確定"], a: "A" },
+        { id: 76, cat: "science", q: "食物中的蛋白質主要在人體的哪一個器官開始被化學消化？", o: ["口腔", "胃", "大腸", "食道"], a: "B" },
+        { id: 77, cat: "science", q: "在電路中，用來量度電流強度的儀器叫做安培計（Ammeter），它應該如何連接到電路中？", o: ["串聯", "並聯", "混聯", "任意連接"], a: "A" },
+        { id: 78, cat: "science", q: "物質由固態直接轉變成氣態的過程稱之為什麼？", o: ["熔化", "汽化", "昇華", "凝華"], a: "C" },
+        { id: 79, cat: "science", q: "生態系統中的食物鏈通常是以什麼作為起點的？", o: ["初級消費者（食草動物）", "次級消費者（食肉動物）", "生產者（綠色植物）", "分解者（細菌和真菌）"], a: "C" },
+        { id: 80, cat: "science", q: "一個物體的質量是 2 kg，當它受到 6 N 的合力時，其加速度是多少？（提示：F = ma）", o: ["3 m/s²", "12 m/s²", "4 m/s²", "0.33 m/s²"], a: "A" },
 
-            // 歷史與綜合人文 (81-100)
-            { id: 136, cat: "history", catName: "歷史與人文", q: "中國歷史上第一個統一全國的封建王朝是哪一個？", o: ["夏朝", "秦朝", "漢朝", "唐朝"], a: "B" },
-            { id: 137, cat: "history", catName: "歷史與人文", q: "為了鞏固統治，漢武帝採納了董仲舒的建議，推行了什麼思想政策？", o: ["罷黜百家，獨尊儒術", "無為而治", "法家嚴刑峻法", "焚書坑儒"], a: "A" },
-            { id: 138, cat: "history", catName: "歷史與人文", q: "歐洲歷史上，開創了歐洲近代民主政治先河、發源於愛琴海沿岸的古代文明是：", o: ["古埃及文明", "古巴比倫文明", "古希臘文明", "古印度文明"], a: "C" },
-            { id: 139, cat: "history", catName: "歷史與人文", q: "地理學中，地球赤道的緯度是多少度？", o: ["0°", "90°", "180°", "23.5°"], a: "A" },
-            { id: 140, cat: "history", catName: "歷史與人文", q: "唐太宗統治時期，政治清明，經濟發展，社會安定，史稱什麼？", o: ["文景之治", "貞觀之治", "開元盛世", "康乾盛世"], a: "B" },
-            { id: 141, cat: "history", catName: "歷史與人文", q: "15 世紀末，哥倫布在西班牙王室資助下，橫渡大西洋，航行到達了哪片新大陸？", o: ["亞洲", "非洲", "美洲", "大洋洲"], a: "C" },
-            { id: 142, cat: "history", catName: "歷史與人文", q: "下列哪一座山脈是世界上最高的大山脈（分隔了南亞與西藏）？", o: ["安第斯山脈", "阿爾卑斯山脈", "落基山脈", "喜馬拉雅山脈"], a: "D" },
-            { id: 143, cat: "history", catName: "歷史與人文", q: "北宋時期，由畢昇發明、極大推動了人類文明傳播的科技成果是什麼？", o: ["造紙術", "火藥", "指南針", "活字印刷術"], a: "D" },
-            { id: 144, cat: "history", catName: "歷史與人文", q: "歐洲文藝復興運動最早發源於哪一個國家？", o: ["英國", "法國", "意大利", "德國"], a: "C" },
-            { id: 145, cat: "history", catName: "歷史與人文", q: "在地圖上，連接地球南北兩極並垂直於赤道的線稱之為什麼？", o: ["緯線", "經線", "等高線", "赤道線"], a: "B" },
-            { id: 146, cat: "history", catName: "歷史與人文", q: "明朝時期，曾率領龐大船隊七次下西洋，最遠到達非洲東海岸的航海家是誰？", o: ["鄭和", "戚計光", "鑒真", "玄奘"], a: "A" },
-            { id: 147, cat: "history", catName: "歷史與人文", q: "下列哪一個事件被視為近代英國確立君主立憲制的標誌？", o: ["法國大革命", "光榮革命", "美國獨立戰爭", "工業革命"], a: "B" },
-            { id: 148, cat: "history", catName: "歷史與人文", q: "世界上面積最大的大洋是哪一個？", o: ["大西洋", "印度洋", "北冰洋", "太平洋"], a: "D" },
-            { id: 149, cat: "history", catName: "歷史與人文", q: "中國古代選拔官吏的「科舉制度」最早創立於哪一個朝代？", o: ["漢朝", "隋朝", "宋朝", "明朝"], a: "B" },
-            { id: 150, cat: "history", catName: "歷史與人文", q: "18 世紀中期發源於英國的工業革命，其最重要的標誌性發明是什麼？", o: ["珍妮紡紗機", "瓦特改良蒸汽機", "火車機車", "電話"], a: "B" },
-            { id: 151, cat: "history", catName: "歷史與人文", q: "日本歷史上，在 7 世紀中期效仿中國唐朝制度進行的重大改革稱之為什麼？", o: ["大化改新", "明治維新", "幕府統治", "文藝復興"], a: "A" },
-            { id: 152, cat: "history", catName: "歷史與人文", q: "下列哪一種氣候類型的特點是「全年高溫多雨」？", o: ["地中海氣候", "溫帶季風氣候", "熱帶雨林氣候", "高山氣候"], a: "C" },
-            { id: 153, cat: "history", catName: "歷史與人文", q: "清朝時期，為了加強君主專制，設立了哪一個直接聽命於皇帝的最高權力機構？", o: ["中書省", "內閣", "軍機處", "樞密院"], a: "C" },
-            { id: 154, cat: "history", catName: "歷史與人文", q: "古代著名的「絲綢之路」起點是當時的哪個城市（即今天的西安）？", o: ["洛陽", "長安", "建康", "北京"], a: "B" },
-            { id: 155, cat: "history", catName: "歷史與人文", q: "聯合國（United Nations）的總部設立在下列哪一個城市？", o: ["安全紐約", "倫敦", "巴黎", "紐約"], a: "D" }
-        ]
-    };
+        // 歷史與綜合人文
+        { id: 81, cat: "history", q: "中國歷史上第一個統一全國的封建王朝是哪一個？", o: ["夏朝", "秦朝", "漢朝", "唐朝"], a: "B" },
+        { id: 82, cat: "history", q: "為了鞏固統治，漢武帝採納了董仲舒的建議，推行了什麼思想政策？", o: ["罷黜百家，獨尊儒術", "無為而治", "法家嚴刑峻法", "焚書坑儒"], a: "A" },
+        { id: 83, cat: "history", q: "歐洲歷史上，開創了歐洲近代民主政治先河、發源於愛琴海沿岸的古代文明是：", o: ["古埃及文明", "古巴比倫文明", "古希臘文明", "古印度文明"], a: "C" },
+        { id: 84, cat: "history", q: "地理學中，地球赤道的緯度是多少度？", o: ["0°", "90°", "180°", "23.5°"], a: "A" },
+        { id: 85, cat: "history", q: "唐太宗統治時期，政治清明，經濟發展，社會安定，史稱什麼？", o: ["文景之治", "貞觀之治", "開元盛世", "康乾盛世"], a: "B" },
+        { id: 86, cat: "history", q: "15 世紀末，哥倫布在西班牙王室資助下，橫渡大西洋，航行到達了哪片新大陸？", o: ["亞洲", "非洲", "美洲", "大洋洲"], a: "C" },
+        { id: 87, cat: "history", q: "下列哪一座山脈是世界上最高的大山脈（分隔了南亞與西藏）？", o: ["安第斯山脈", "阿爾卑斯山脈", "落基山脈", "喜馬拉雅山脈"], a: "D" },
+        { id: 88, cat: "history", q: "北宋時期，由畢昇發明、極大推動了人類文明傳播的科技成果是什麼？", o: ["造紙術", "火藥", "指南針", "活字印刷術"], a: "D" },
+        { id: 89, cat: "history", q: "歐洲文藝復興運動最早發源於哪一個國家？", o: ["英國", "法國", "意大利", "德國"], a: "C" },
+        { id: 90, cat: "history", q: "在地圖上，連接地球南北兩極並垂直於赤道的線稱之為什麼？", o: ["緯線", "經線", "等高線", "赤道線"], a: "B" },
+        { id: 91, cat: "history", q: "明朝時期，曾率領龐大船隊七次下西洋，最遠到達非洲東海岸的航海家是誰？", o: ["鄭和", "戚繼光", "鑒真", "玄奘"], a: "A" },
+        { id: 92, cat: "history", q: "下列哪一個事件被視為近代英國確立君主立憲制的標誌？", o: ["法國大革命", "光榮革命", "美國獨立戰爭", "工業革命"], a: "B" },
+        { id: 93, cat: "history", q: "世界上面積最大的大洋是哪一個？", o: ["大西洋", "印度洋", "北冰洋", "太平洋"], a: "D" },
+        { id: 94, cat: "history", q: "中國古代選拔官吏的「科舉制度」最早創立於哪一個朝代？", o: ["漢朝", "隋朝", "宋朝", "明朝"], a: "B" },
+        { id: 95, cat: "history", q: "18 世紀中期發源於英國的工業革命，其最重要的標誌性發明是什麼？", o: ["珍妮紡紗機", "瓦特改良蒸汽機", "火車機車", "電話"], a: "B" },
+        { id: 96, cat: "history", q: "日本歷史上，在 7 世紀中期效仿中國唐朝制度進行的重大改革稱之為什麼？", o: ["大化改新", "明治維新", "幕府統治", "文藝復興"], a: "A" },
+        { id: 97, cat: "history", q: "下列哪一種氣候類型的特點是「全年高溫多雨」？", o: ["地中海氣候", "溫帶季風氣候", "熱帶雨林氣候", "高山氣候"], a: "C" },
+        { id: 98, cat: "history", q: "清朝時期，為了加強君主專制，設立了哪一個直接聽命於皇帝的最高權力機構？", o: ["中書省", "內閣", "軍機處", "樞密院"], a: "C" },
+        { id: 99, cat: "history", q: "古代著名的「絲綢之路」起點是當時的哪個城市（即今天的西安）？", o: ["洛陽", "長安", "建康", "北京"], a: "B" },
+        { id: 100, cat: "history", q: "聯合國（United Nations）的總部設立在下列哪一個城市？", o: ["倫敦", "巴黎", "日內瓦", "紐約"], a: "D" }
+    ];
 
-    let currentUser = "晴晴"; // 預設載入晴晴
-    const optionLetters = ["A", "B", "C", "D", "E"];
+    const optionLetters = ["A", "B", "C", "D"];
 
-    function loadUserQuiz() {
-        const questions = allUsersData[currentUser];
-        const tabContainer = document.getElementById("学科Tabs");
-        const quizContainer = document.getElementById("quizContainer");
-        
-        const categories = {};
-        questions.forEach(q => {
-            if (!categories[q.cat]) {
-                categories[q.cat] = q.catName;
-            }
-        });
+    // 動態渲染題目到各分區
+    function renderQuiz() {
+        quizData.forEach(item => {
+            const container = document.getElementById(item.cat);
+            if (!container) return;
 
-        tabContainer.innerHTML = "";
-        let isFirst = true;
-        for (let catId in categories) {
-            const btn = document.createElement("button");
-            btn.className = `tab-btn ${isFirst ? 'active' : ''}`;
-            btn.innerText = categories[catId];
-            btn.setAttribute("onclick", `switchTab('${catId}')`);
-            btn.id = `tab-btn-${catId}`;
-            tabContainer.appendChild(btn);
-            isFirst = false;
-        }
+            const card = document.createElement("div");
+            card.className = "question-card";
+            card.id = `q-card-${item.id}`;
 
-        quizContainer.innerHTML = "";
-        isFirst = true;
-        
-        // 為了卡樂的題目序號顯示美觀，重新內部給定顯示序號
-        let displayIndex = 1;
+            const title = document.createElement("div");
+            title.className = "question-title";
+            title.innerHTML = `${item.id}. ${item.q}`;
+            card.appendChild(title);
 
-        for (let catId in categories) {
-            const section = document.createElement("div");
-            section.id = `sec-${catId}`;
-            section.className = `quiz-section ${isFirst ? 'active' : ''}`;
-            
-            const catQuestions = questions.filter(q => q.cat === catId);
-            catQuestions.forEach(item => {
-                const card = document.createElement("div");
-                card.className = "question-card";
-                card.id = `q-card-${item.id}`;
+            const optionsList = document.createElement("ul");
+            optionsList.className = "options-list";
 
-                const title = document.createElement("div");
-                title.className = "question-title";
-                title.innerHTML = `${displayIndex}. ${item.q}`;
-                card.appendChild(title);
-
-                const optionsList = document.createElement("ul");
-                optionsList.className = "options-list";
-
-                item.o.forEach((opt, idx) => {
-                    const letter = optionLetters[idx];
-                    const li = document.createElement("li");
-                    li.className = "option-item";
-                    li.innerHTML = `
-                        <label id="label-${item.id}-${letter}">
-                            <input type="radio" name="question-${item.id}" value="${letter}">
-                            <strong>${letter})</strong> ${opt}
-                        </label>
-                    `;
-                    optionsList.appendChild(li);
-                });
-
-                card.appendChild(optionsList);
-
-                const feedback = document.createElement("div");
-                feedback.className = "feedback-text";
-                feedback.id = `feedback-${item.id}`;
-                feedback.innerText = `正確答案為：${item.a}`;
-                card.appendChild(feedback);
-
-                section.appendChild(card);
-                displayIndex++;
+            item.o.forEach((opt, idx) => {
+                const letter = optionLetters[idx];
+                const li = document.createElement("li");
+                li.className = "option-item";
+                
+                li.innerHTML = `
+                    <label id="label-${item.id}-${letter}">
+                        <input type="radio" name="question-${item.id}" value="${letter}">
+                        <strong>${letter})</strong> ${opt}
+                    </label>
+                `;
+                optionsList.appendChild(li);
             });
 
-            quizContainer.appendChild(section);
-            isFirst = false;
-        }
+            card.appendChild(optionsList);
 
-        document.getElementById("resultBox").style.display = "none";
+            // 建立隱藏的答案提示文字（評分後顯示）
+            const feedback = document.createElement("div");
+            feedback.className = "feedback-text";
+            feedback.id = `feedback-${item.id}`;
+            feedback.innerText = `正確答案為：${item.a}`;
+            card.appendChild(feedback);
+
+            container.appendChild(card);
+        });
     }
 
-    function switchUser(userName) {
-        document.querySelectorAll('.user-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        currentUser = userName;
-        loadUserQuiz();
-    }
-
+    // 切換學科分頁
     function switchTab(catId) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.quiz-section').forEach(sec => sec.classList.remove('active'));
         
-        document.getElementById(`tab-btn-${catId}`).classList.add('active');
-        document.getElementById(`sec-${catId}`).classList.add('active');
+        event.target.classList.add('active');
+        document.getElementById(catId).classList.add('active');
     }
 
+    // 評分系統
     function gradeQuiz() {
-        const questions = allUsersData[currentUser];
         let score = 0;
-        const total = questions.length;
+        const total = quizData.length;
 
-        document.querySelectorAll('.option-item label').forEach(lbl => lbl.className = '');
-        document.querySelectorAll('.feedback-text').forEach(fb => fb.style.display = 'none');
+        // 清除先前的修正樣式
+        document.querySelectorAll('.option-item label').forEach(lbl => {
+            lbl.className = '';
+        });
+        document.querySelectorAll('.feedback-text').forEach(fb => {
+            fb.style.display = 'none';
+        });
 
-        questions.forEach(item => {
+        quizData.forEach(item => {
             const selectedOpt = document.querySelector(`input[name="question-${item.id}"]:checked`);
             const correctLabel = document.getElementById(`label-${item.id}-${item.a}`);
             
@@ -534,21 +423,25 @@
                     if (wrongLabel) {
                         wrongLabel.classList.add('wrong-answer');
                     }
+                    // 答錯才額外在卡片下方彈出文字提醒
                     document.getElementById(`feedback-${item.id}`).style.display = 'block';
                 }
             } else {
+                // 未答當答錯處理
                 document.getElementById(`feedback-${item.id}`).style.display = 'block';
             }
         });
 
+        // 顯示結果資訊
         const resultBox = document.getElementById("resultBox");
         const scoreText = document.getElementById("scoreText");
-        scoreText.innerText = `【${currentUser}】的測驗結果：${score} / ${total} 題 (得分率: ${Math.round((score/total)*100)}%)`;
+        scoreText.innerText = `得分：${score} / ${total} 題 (得分率: ${Math.round((score/total)*100)}%)`;
         resultBox.style.display = "block";
         resultBox.scrollIntoView({ behavior: 'smooth' });
     }
 
-    window.onload = loadUserQuiz;
+    // 初始化載入題目
+    window.onload = renderQuiz;
 </script>
 
 </body>
