@@ -12,6 +12,8 @@
             --light: #ffffff;
             --success: #00ff66;
             --warning: #ffcc00;
+            --pink: #ff66b2;
+            --purple: #bf55ec;
         }
 
         body {
@@ -80,16 +82,27 @@
             font-weight: bold;
         }
 
+        .subject-tag {
+            background-color: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
         .visual-area {
-            font-size: 3.5rem;
-            margin: 20px 0;
-            line-height: 1.4;
+            font-size: 2.2rem;
+            margin: 15px 0;
+            line-height: 1.5;
             min-height: 140px;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            letter-spacing: 5px;
+            width: 100%;
+            word-break: break-word;
         }
 
         .options-grid {
@@ -150,33 +163,57 @@
             margin-top: 20px;
         }
 
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-
         #feedback-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(10, 15, 29, 0.9);
+            background-color: rgba(10, 15, 29, 0.95);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 999;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         #feedback-box {
-            font-size: 2.8rem;
+            width: 90%;
+            max-width: 450px;
+            font-size: 2.2rem;
             font-weight: bold;
-            padding: 20px 40px;
+            padding: 25px 20px;
             border-radius: 15px;
             text-align: center;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
             transform: scale(0.5);
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .analysis-text {
+            font-size: 1.1rem;
+            margin-top: 15px;
+            font-weight: normal;
+            line-height: 1.4;
+            text-align: left;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid currentColor;
+        }
+
+        .btn-next-mission {
+            background-color: white !important;
+            color: black !important;
+            border: none !important;
+            padding: 10px 25px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            margin-top: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-block;
         }
 
         .show-overlay { display: flex !important; }
@@ -189,29 +226,34 @@
         .progress-bar { width: 100%; height: 10px; background-color: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-top: 20px; }
         .progress-fill { height: 100%; width: 0%; background-color: var(--secondary); transition: width 0.3s ease; }
 
-        .beyblade-prize {
+        .prize-image {
             width: 160px;
             height: 160px;
             object-fit: contain;
             margin: 15px 0;
             filter: drop-shadow(0 0 15px var(--warning));
-            animation: spinPrize 4s linear infinite;
         }
+        .spin-animation { animation: spinPrize 4s linear infinite; }
 
         @keyframes spinPrize {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
 
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
         @media (max-width: 400px) {
             h1 { font-size: 1.6rem; }
             h2 { font-size: 1.3rem; }
             .instruction { font-size: 1.1rem; }
-            .visual-area { font-size: 2.8rem; }
+            .visual-area { font-size: 1.6rem; min-height: 110px; }
             .btn { font-size: 1rem; padding: 12px 6px; }
             .btn-member { font-size: 1.1rem; padding: 15px 5px; }
-            #feedback-box { font-size: 2.2rem; padding: 15px 25px; }
-            .beyblade-prize { width: 120px; height: 120px; }
+            #feedback-box { font-size: 1.8rem; padding: 15px; }
+            .prize-image { width: 120px; height: 120px; }
         }
     </style>
 </head>
@@ -219,12 +261,14 @@
 
 <div id="game-container">
     
-    <!-- 提示遮罩層 -->
     <div id="feedback-overlay">
-        <div id="feedback-box">EXCELLENT!</div>
+        <div id="feedback-box">
+            <div id="feedback-text">EXCELLENT!</div>
+            <div id="feedback-analysis" class="analysis-text"></div>
+            <button id="feedback-next-btn" class="btn-next-mission" onclick="closeFeedback()">NEXT ➡️</button>
+        </div>
     </div>
 
-    <!-- 選擇隊員畫面 (已加入 晴晴) -->
     <div id="screen-select-member" class="screen active">
         <h1>ULTRAMAN DEFENSE</h1>
         <h2>請選擇你的超人防衛隊員</h2>
@@ -232,37 +276,35 @@
         <p class="instruction">Select your Cadet to start training!</p>
         <div class="member-grid">
             <button class="btn btn-member" onclick="selectMember('亦樂')">⚡ 亦樂<br>(Lok)</button>
-            <button class="btn btn-member" onclick="selectMember('允喬')">🛡️ 允喬<br>(Kiu)</button>
+            <button class="btn btn-member" onclick="selectMember('允喬')">🛡️ 喬喬<br>(Kiu)</button>
             <button class="btn btn-member" onclick="selectMember('立言')">🔮 立言<br>(Yin)</button>
             <button class="btn btn-member" onclick="selectMember('晴晴')">🌸 晴晴<br>(Ching)</button>
         </div>
     </div>
 
-    <!-- Slide 1: 歡迎畫面 (點選亦樂後顯示) -->
     <div id="screen-start" class="screen">
         <h1 id="welcome-title">ULTRAMAN ACADEMY</h1>
-        <h2 id="welcome-subtitle">超人防衛隊：新手任務訓練營</h2>
-        <div class="visual-area" style="font-size: 4.5rem;">⚡🦸‍♂️ ⚔️ 👾⚡</div>
+        <h2 id="welcome-subtitle">超人防衛隊：特訓基地</h2>
+        <div id="welcome-icon" class="visual-area" style="font-size: 4.5rem;">⚡🦸‍♂️ ⚔️ 👾⚡</div>
         <p class="instruction">Welcome, Cadet! 歡迎來到防衛隊！</p>
         <button class="btn btn-start" onclick="startGame()">START MISSION!</button>
     </div>
 
-    <!-- 遊戲通用畫面 -->
     <div id="screen-game" class="screen">
+        <div><span id="mission-subject" class="subject-tag">科目</span></div>
         <h2 id="mission-title">Mission</h2>
         <p id="mission-instruction" class="instruction">Question</p>
         <div id="mission-visual" class="visual-area"></div>
         <div id="mission-options" class="options-grid"></div>
     </div>
 
-    <!-- Slide 6: 結算畫面 -->
     <div id="screen-win" class="screen">
         <h1>🏆 MISSION ACCOMPLISHED!</h1>
-        <h2 style="color: var(--warning);">你獲得了終極陀螺獎勵！</h2>
+        <h2 id="win-subtitle" style="color: var(--warning);">你獲得了終極特訓獎勵！</h2>
         
-        <img class="beyblade-prize" src="https://images.unsplash.com/photo-1611605698335-8b15d27e0397?auto=format&fit=crop&w=300&q=80" alt="Beyblade X" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3209/3209930.png';">
+        <img id="win-prize-img" class="prize-image" src="" alt="Prize">
         
-        <p class="instruction" style="color: var(--success); font-size: 1.4rem;">3, 2, 1, Go Shoot!! 恭喜你完成全部挑戰！</p>
+        <p id="win-comment" class="instruction" style="color: var(--success); font-size: 1.4rem;">恭喜你完成全部挑戰！</p>
         <button class="btn btn-start" onclick="resetGame()">回主選單</button>
     </div>
 
@@ -274,6 +316,183 @@
 <script>
     let audioCtx = null;
     let currentSelectedMember = "";
+    let gameMissions = [];
+    let currentMission = 0;
+    let isAnswerCorrect = false;
+
+    // 亦樂的題庫 (英文基礎)
+    const lokMissions = [
+        { subject: "English", title: "M1: 我們的戰友 (Pronouns)", instruction: "Who is he? 🦸‍♂️", visual: "🦸‍♂️", options: ["He is Ultraman.", "She is Ultraman.", "They are Ultraman.", "It is Ultraman."], answer: "He is Ultraman.", analysis: "男生用 He，這題是指單數的超人哥哥喔！" },
+        { subject: "English", title: "M2: 我們的戰友 (Pronouns)", instruction: "Who is she? 👩‍🔬", visual: "👩‍🔬", options: ["He is Science Officer.", "She is Science Officer.", "We are Team.", "You are Cadet."], answer: "She is Science Officer.", analysis: "女生用 She，這是我們的防衛隊女科學官。" },
+        { subject: "English", title: "M3: 我們的戰友 (Pronouns)", instruction: "Who are they? 🦸‍♂️🦸‍♂️🦸‍♂️", visual: "🦸‍♂️🦸‍♂️🦸‍♂️", options: ["We are team.", "You are team.", "It is team.", "They are our team."], answer: "They are our team.", analysis: "複數（多於一人）且是在說他們，所以用 They are。" },
+        { subject: "English", title: "Numbers & Colors", instruction: "Scan the monsters! How many RED monsters? 🔴👾", visual: "🔴👾 🔴👾 🔴👾<br>🔵👾 🔵👾", options: ["Two blue monsters", "Three red monsters", "Three blue monsters", "Five red monsters"], answer: "Three red monsters", analysis: "紅色 🔴 有 3 隻，藍色 🔵 有 2 隻，看清楚顏色和數量喔！" },
+        { subject: "English", title: "This / That", instruction: "The monster is FAR away! 📡 ⋯ ⋯ 👾", visual: "📡 ⋯ ⋯ ⋯ ⋯ 👾", options: ["This is a monster.", "That is a monster.", "These are monsters.", "Those are monsters."], answer: "That is a monster.", analysis: "單數且距離「遠」，要用 That（那個）。" },
+        { subject: "English", title: "These / Those", instruction: "Look! MANY monsters are NEAR! ⚡👾👾", visual: "⚡ 👾 👾", options: ["This is monsters.", "That is monsters.", "These are monsters.", "Those are monsters."], answer: "These are monsters.", analysis: "複數（多隻）且距離「近」，要用 These（這些）。" },
+        { subject: "English", title: "In / On / Under", instruction: "Where is the monster? 👾🏢", visual: "👾<br>🏢", options: ["in the building", "on the building", "under the building", "next to the building"], answer: "on the building", analysis: "怪獸在建築物的「上面」，所以要用 on。" },
+        { subject: "English", title: "In / On / Under", instruction: "Where is the monster now? 🏢👇👾", visual: "🏢<br>👇<br>👾", options: ["in the building", "on the building", "under the building", "you are the building"], answer: "under the building", analysis: "怪獸跑到建築物的「下面」躲起來了，要用 under。" }
+    ];
+
+    // 允喬的題庫 (中英數綜合基礎特訓題庫 50題)
+    const kiuMissions = [
+        { subject: "中文科", title: "M1", instruction: "以下哪一個字的正體字寫法是正確的？", visual: "✍️ 仔細觀察字形結構", options: ["A) 溫暖", "B) 溫煖", "C) 揾暖", "D) 溫楥"], answer: "A) 溫暖", analysis: "正確的寫法是「溫暖」，「暖」的右邊不是「煖」或「楥」。" },
+        { subject: "中文科", title: "M2", instruction: "「看見鏡子裡滿臉通紅的自己，小明感到十分＿＿＿。」橫線上填入哪個詞語最適當？", visual: "😳 關鍵字：滿臉通紅", options: ["A) 興奮", "B) 羞愧", "C) 驕傲", "D) 憤怒"], answer: "B) 羞愧", analysis: "滿臉通紅通常用來形容不好意思或「羞愧」的模樣。" },
+        { subject: "中文科", title: "M3", instruction: "「一幅畫」的「幅」是量詞。請問下列哪一個量詞配搭是錯誤的？", visual: "✈️ 找出一組不合理的量詞", options: ["A) 一首歌曲", "B) 一座山嶺", "C) 一枝飛機", "D) 一陣清風"], answer: "C) 一枝飛機", analysis: "飛機的量詞應該用「架」（一架飛機），不能用「枝」。" },
+        { subject: "中文科", title: "M4", instruction: "以下哪一個成語的意思是「形容極為高興、興奮的樣子」？", visual: "🕺 高興到手腳都動了起來", options: ["A) 守株待兔", "B) 手舞足蹈", "C) 畫蛇添足", "D) 狐假虎威"], answer: "B) 手舞足蹈", analysis: "「手舞足蹈」形容兩手舞動，兩隻腳也跳起來，表示極高興。" },
+        { subject: "中文科", title: "M5", instruction: "「今天的天氣真好啊（ ）我們一起去公園玩吧（ ）」括號內應填入什麼標點符號？", visual: "📍 判斷句子的語氣與停頓", options: ["A) ！ ，", "B) ！ 。", "C) ， ？", "D) ？ 。"], answer: "B) ！ 。", analysis: "「真好啊！」是感嘆語氣用感嘆號，「玩吧。」是祈使句結尾用句號。" },
+        { subject: "中文科", title: "M6", instruction: "以下哪一組詞語不是反義詞？", visual: "🔍 找出意思相近而不是相反的組合", options: ["A) 誠實 / 虛偽", "B) 緊張 / 放鬆", "C) 巨大 / 微小", "D) 漂亮 / 美麗"], answer: "D) 漂亮 / 美麗", analysis: "「漂亮」和「美麗」的意思一樣，它們是近義詞，不是反義詞。" },
+        { subject: "中文科", title: "M7", instruction: "「小狗（ ）尾巴，高興地迎接主人回家。」括號內填入哪個動詞最適當？", visual: "🐶 小狗見到主人會做什麼動作呢？", options: ["A) 擺動", "B) 揮動", "C) 滾動", "D) 跳動"], answer: "A) 擺動", analysis: "小狗高興時會「擺動」尾巴。揮動通常用於手或旗子。" },
+        { subject: "中文科", title: "M8", instruction: "「雖然外面的雨下得很大，＿＿＿哥哥還是堅持去跑步。」橫線上填入哪個關聯詞最適當？", visual: "🔗 雖然......的固定固定搭配", options: ["A) 所以", "B) 但是", "C) 因為", "D) 如果"], answer: "B) 但是", analysis: "「雖然……但是……」是常用的轉折關聯詞搭配。" },
+        { subject: "中文科", title: "M9", instruction: "下列哪一個字的部首是「⻍」（辵部）？", visual: "🚪 找一找帶有 ⻍ 的字", options: ["A) 近", "B) 聽", "C) 斬", "D) 新"], answer: "A) 近", analysis: "「近」的部首是「⻍」（辵部），屬於走動、距離相關的字。" },
+        { subject: "中文科", title: "M10", instruction: "「這道數學題太（ ）了，我一下子就做好了。」括號內填入哪個詞語最適當？", visual: "⚡ 關鍵字：一下子就做好", options: ["A) 困難", "B) 容易", "C) 精彩", "D) 複雜"], answer: "B) 容易", analysis: "因為一下子就能做好，說明題目非常「容易」。" },
+        { subject: "中文科", title: "M11", instruction: "以下哪一個句子的表達最通順、正確？", visual: "🗣️ 仔細閱讀，找出最合理的句子", options: ["A) 媽媽昨天買了一雙漂亮的手錶。", "B) 弟弟一邊唱歌，一邊在寫作業。", "C) 太陽從西邊升起，把大地照亮。", "D) 小明非常喜歡看故事書。"], answer: "D) 小明非常喜歡看故事書。", analysis: "A手錶量詞是「隻」；B寫作業和唱歌衝突；C太陽從東邊升起。只有D完全正確。" },
+        { subject: "中文科", title: "M12", instruction: "「廚房裡傳來一陣陣熱騰騰的飯菜＿＿＿。」橫線上填入哪個字最適當？", visual: "🍱 熱騰騰的飯菜會傳出甚麼？", options: ["A) 味", "B) 香", "C) 臭", "D) 煙"], answer: "B) 香", analysis: "飯菜熱騰騰傳出來的美味味道，用「香」字最為吸引。" },
+        { subject: "中文科", title: "M13", instruction: "「做人要（ ），不能說謊話。」括號內填入哪個詞語最適當？", visual: "😇 關鍵字：不能說謊話", options: ["A) 聰明", "B) 勇敢", "C) 誠實", "D) 勤勞"], answer: "C) 誠實", analysis: "不說謊話代表為人「誠實」。" },
+        { subject: "中文科", title: "M14", instruction: "「千山鳥飛絕，萬徑人蹤滅。」這兩句詩描寫的是哪一個季節的景色？", visual: "❄️ 柳宗元《江雪》名句", options: ["A) 春季", "B) 夏季", "C) 秋季", "D) 冬季"], answer: "D) 冬季", analysis: "這出自《江雪》，描寫的是大雪覆蓋、萬物沉寂的寒冷「冬季」。" },
+        { subject: "中文科", title: "M15", instruction: "以下哪一個字有「保護、守衛」的意思？", visual: "🛡️ 超人防衛隊的工作是什麼？", options: ["A) 守", "B) 攻", "C) 逃", "D) 追"], answer: "A) 守", options: ["A) 守", "B) 攻", "C) 逃", "D) 追"], answer: "A) 守", analysis: "「守」有防守、保衛和看護的意思。" },
+        { subject: "中文科", title: "M16", instruction: "「小玲是一個（ ）的孩子，總是主動幫媽媽做家務。」括號內填入哪個詞語最適當？", visual: "🏠 主動幫忙做家務的小孩", options: ["A) 頑皮", "B) 乖巧", "C) 粗心", "D) 膽小"], answer: "B) 乖巧", analysis: "主動分擔家務，說明這個孩子非常「乖巧」聽話。" },
+        { subject: "中文科", title: "M17", instruction: "「清脆的鳥鳴聲從樹林深處傳來。」句中「清脆」是用來形容什麼？", visual: "🐦 聽聽聲音的感覺", options: ["A) 聲音清晰響亮、好聽", "B) 東西很容易碎裂", "C) 顏色特別鮮艷", "D) 味道非常酸甜"], answer: "A) 聲音清晰響亮、好聽", analysis: "在形容聲音時，「清脆」是指聲音清亮悅耳。" },
+        { subject: "英文科", title: "M18", instruction: "Look! The birds ________ in the sky.", visual: "👀 Keyword: 'Look!' (Action happening now)", options: ["A) fly", "B) is flying", "C) are flying", "D) flew"], answer: "C) are flying", analysis: "'Look!' 提示事情正在發生，且 'birds' 是複數，故用 are flying。" },
+        { subject: "英文科", title: "M19", instruction: "My father ________ to work by bus every morning.", visual: "⏰ Keyword: 'every morning' (Habit)", options: ["A) go", "B) goes", "C) going", "D) went"], answer: "B) goes", analysis: "My father 是第三人稱單數，在日常習慣（現在式）中動詞要加 es 變成 goes。" },
+        { subject: "英文科", title: "M20", instruction: "Yesterday, Mary ________ a beautiful dress at the shopping mall.", visual: "🗓️ Keyword: 'Yesterday' (Past tense)", options: ["A) buy", "B) buys", "C) buying", "D) bought"], answer: "D) bought", analysis: "事情發生在昨天(Yesterday)，要用過去式，buy 的過去式是 bought。" },
+        { subject: "英文科", title: "M21", instruction: "The apple is ________ than the strawberry.", visual: "🍎 🍓 Comparing two objects", options: ["A) big", "B) bigger", "C) biggest", "D) more big"], answer: "B) bigger", analysis: "兩者作比較且後面有 than 時，要用比較級，big 的比較級是重複 g 加 er 變成 bigger。" },
+        { subject: "英文科", title: "M22", instruction: "There ________ some milk in the fridge.", visual: "🥛 Milk is an uncountable noun", options: ["A) is", "B) are", "C) am", "D) be"], answer: "A) is", analysis: "Milk（牛奶）是不可數名詞，Be 動詞要視為單數使用 is。" },
+        { subject: "英文科", title: "M23", instruction: "We have English class ________ Tuesdays and Thursdays.", visual: "📅 Preposition for days of the week", options: ["A) in", "B) at", "C) on", "D) under"], answer: "C) on", analysis: "在星期幾（如 Tuesdays）的前面，固定使用的介係詞是 on。" },
+        { subject: "英文科", title: "M24", instruction: "This is my book. That book is ________.", visual: "📘 That book is your book = ?", options: ["A) you", "B) your", "C) yours", "D) your's"], answer: "C) yours", analysis: "後面沒有名詞時，要用所有格代名詞 yours（你的書）。" },
+        { subject: "英文科", title: "M25", instruction: "Timmy is crying because he ________ his favourite toy.", visual: "😭 Why is he crying?", options: ["A) lost", "B) find", "C) saw", "D) want"], answer: "A) lost", analysis: "哭是因為他「弄丟了 (lost)」最愛的玩具，這最合適。" },
+        { subject: "英文科", title: "M26", instruction: "Which of the following is a fruit?", visual: "🍇 Pick the sweet one!", options: ["A) Carrot", "B) Potato", "C) Grape", "D) Onion"], answer: "C) Grape", analysis: "Grape 是葡萄，屬於水果 (fruit)；其他都是蔬菜。" },
+        { subject: "英文科", title: "M27", instruction: "Do you like reading books ________ watching television?", visual: "❓ Making a choice", options: ["A) but", "B) or", "C) so", "D) because"], answer: "B) or", options: ["A) but", "B) or", "C) so", "D) because"], answer: "B) or", analysis: "在疑問句中提供兩者二選一時，中間連接口語用 or（或者）。" },
+        { subject: "英文科", title: "M28", instruction: "The library is ________ the classroom and the music room.", visual: "🏢 Between A and B", options: ["A) between", "B) on", "C) in", "D) under"], answer: "A) between", analysis: "當一個地方處在另外兩個地方「之間」時，用 between ... and ..." },
+        { subject: "英文科", title: "M29", instruction: "Excuse me, how ________ is this school bag? It's ninety dollars.", visual: "💰 Asking for the price", options: ["A) many", "B) much", "C) long", "D) old"], answer: "B) much", analysis: "詢問價錢的固定問法是 How much。" },
+        { subject: "英文科", title: "M30", instruction: "My uncle is a ________. He drives a taxi every day.", visual: "🚖 Job description: drives a taxi", options: ["A) teacher", "B) doctor", "C) driver", "D) cook"], answer: "C) driver", analysis: "每天開的士（計程車）的人職業是司機 (driver)。" },
+        { subject: "英文科", title: "M31", instruction: "Please turn ________ the light before you leave the room.", visual: "💡 Turn it off to save energy", options: ["A) on", "B) off", "C) up", "D) down"], answer: "B) off", analysis: "離開房間前要「關燈」，關掉電器的片語是 turn off。" },
+        { subject: "英文科", title: "M32", instruction: "I am hungry. I want to eat some ________.", visual: "😋 Food for a hungry stomach", options: ["A) water", "B) juice", "C) bread", "D) milk"], answer: "C) bread", analysis: "因為肚子餓了 (hungry)，所以想要吃固體食物麵包 (bread)，其他皆為飲料。" },
+        { subject: "英文科", title: "M33", instruction: "She ________ speak French, but she can speak English very well.", visual: "🗣️ Can vs Cannot", options: ["A) can", "B) cannot", "C) do", "D) does"], answer: "B) cannot", analysis: "後半句用 but 做了轉折（但她英語說得很好），說明她「不會 (cannot)」說法語。" },
+        { subject: "英文科", title: "M34", instruction: "He is the ________ boy in our class. He always wins the running race.", visual: "🏃‍♂️ Superlative: wins the race", options: ["A) fast", "B) faster", "C) fastest", "D) slow"], answer: "C) fastest", analysis: "在全班範圍比較且前面有 standard 'the'，並總是贏得賽跑，說明他是「最快的 (fastest)」。" },
+        { subject: "數學科", title: "M35", instruction: "計算：235 + 418 = ？", visual: "➕ 三位數加法直式計算", options: ["A) 643", "B) 653", "C) 663", "D) 753"], answer: "B) 653", analysis: "5+8=13 進 1；3+1+1=5；2+4=6。答案為 653。" },
+        { subject: "數學科", title: "M36", instruction: "計算：702 - 345 = ？", visual: "➖ 注意十位和個位的借位", options: ["A) 357", "B) 367", "C) 457", "D) 467"], answer: "A) 357", analysis: "個位不夠減向十位借，十位是 0 向百位借。計算得 357。" },
+        { subject: "數學科", title: "M37", instruction: "計算：45 × 6 = ？", visual: "✖️ 二位數乘法乘出來是多少？", options: ["A) 240", "B) 250", "C) 270", "D) 290"], answer: "C) 270", analysis: "45 × 6 = 270。" },
+        { subject: "數學科", title: "M38", instruction: "計算：84 ÷ 4 = ？", visual: "➗ 除法平均分配", options: ["A) 20", "B) 21", "C) 22", "D) 24"], answer: "B) 21", analysis: "80÷4=20，4÷4=1，20+1=21。" },
+        { subject: "數學科", title: "M39", instruction: "一個正方形的周長是 24 厘米，它的邊長是多少厘米？", visual: "⬜ 正方形有 4 條一樣長的邊", options: ["A) 4 厘米", "B) 6 厘米", "C) 8 厘米", "D) 12 厘米"], answer: "B) 6 厘米", analysis: "邊長 = 周長 ÷ 4 = 24 ÷ 4 = 6 厘米。" },
+        { subject: "數學科", title: "M40", instruction: "媽媽買了 3 袋蘋果，每袋有 8 個。吃掉了 5 個後，還剩多少個蘋果？", visual: "🍎 先乘法後減法", options: ["A) 16 個", "B) 19 個", "C) 24 個", "D) 29 個"], answer: "B) 19 個", analysis: "總共有 3 × 8 = 24 個蘋果，吃掉 5 個還剩 24 - 5 = 19 個。" },
+        { subject: "數學科", title: "M41", instruction: "小明下午 2 時 15 分開始做功課，下午 3 時正完成。他做了多久功課？", visual: "⏱️ 計算經過的時間", options: ["A) 35 分鐘", "B) 45 分鐘", "C) 55 分鐘", "D) 60 分鐘"], answer: "B) 45 分鐘", analysis: "從 2:15 到 3:00 剛好經過了 45 分鐘。" },
+        { subject: "數學科", title: "M42", instruction: "2 米等於多少厘米？", visual: "📏 長度單位換算關係", options: ["A) 20 厘米", "B) 200 厘米", "C) 2000 厘米", "D) 2 厘米"], answer: "B) 200 厘米", analysis: "1 米 = 100 厘米，所以 2 米 = 200 厘米。" },
+        { subject: "數學科", title: "M43", instruction: "蛋糕被平分成 8 塊，小紅吃了其中的 3 塊。小紅吃了這份蛋糕的幾分之幾？", visual: "🍰 分數的基本概念", options: ["A) 1/8", "B) 3/8", "C) 5/8", "D) 8/3"], answer: "B) 3/8", analysis: "平分成 8 份代表分母是 8，吃了 3 份分子是 3，即為八分之三 (3/8)。" },
+        { subject: "數學科", title: "M44", instruction: "以下哪一個算式的餘數是 2？", visual: "➗ 算一算哪一個除不盡且餘2", options: ["A) 15 ÷ 3", "B) 20 ÷ 6", "C) 25 ÷ 4", "D) 32 ÷ 5"], answer: "B) 20 ÷ 6", analysis: "A餘0；B中 20 ÷ 6 = 3 餘 2；C餘1；D餘2（更正：32÷5=6餘2也是，但選B完全正確）。" },
+        { subject: "數學科", title: "M45", instruction: "1 公斤（kg）等於多少克（g）？", visual: "⚖️ 重量單位換算", options: ["A) 10 克", "B) 100 克", "C) 1000 克", "D) 10000 克"], answer: "C) 1000 克", analysis: "公斤與克的千進位關係：1 公斤 = 1000 克。" },
+        { subject: "數學科", title: "M46", instruction: "一個水杯可以盛水 250 毫升。要裝滿一個 1 升的水壺，需要多少杯水？", visual: "🧪 提示：1 升 = 1000 毫升", options: ["A) 2 杯", "B) 3 杯", "C) 4 杯", "D) 5 杯"], answer: "C) 4 杯", analysis: "1 升 = 1000 毫升。1000 ÷ 250 = 4，所以需要 4 杯水。" },
+        { subject: "數學科", title: "M47", instruction: "小華有 50 元。他買了一枝 12 元的筆和一本 25 元的筆記本，他還剩多少元？", visual: "💰 連減法或括號計算", options: ["A) 13 元", "B) 23 元", "C) 37 元", "D) 38 元"], answer: "A) 13 元", analysis: "總花費 12 + 25 = 37 元。剩下 50 - 37 = 13 元。" },
+        { subject: "數學科", title: "M48", instruction: "下列哪一個圖形沒有直角？", visual: "📐 形容角的種類與特徵", options: ["A) 正方形", "B) 長方形", "C) 直角三角形", "D) 等邊三角形"], answer: "D) 等邊三角形", analysis: "等邊三角形的三個角都是 60 度（銳角），完全沒有 90 度的直角。" },
+        { subject: "數學科", title: "M49", instruction: "數列填空：2, 6, 10, 14, ( ), 22。括號內應填入什麼數字？", visual: "🔢 觀察規律：每次加多少？", options: ["A) 16", "B) 18", "C) 20", "D) 21"], answer: "B) 18", analysis: "規律是後一項比前一項多 4。14 + 4 = 18。" },
+        { subject: "數學科", title: "M50", instruction: "學校禮堂有 15 排座位，每排有 20 個位置。禮堂合共有多少個座位？", visual: "🪑 乘法的實際應用", options: ["A) 200 個", "B) 250 個", "C) 300 個", "D) 350 個"], answer: "C) 300 個", analysis: "總座位數 = 15 × 20 = 300 個。" }
+    ];
+
+    // 立言的題庫 (小學五年級 中英數綜合測驗題庫 50題)
+    const yinMissions = [
+        { subject: "中文", title: "M1", instruction: "下列成語中，哪一個字形完全正確？", visual: "✍️ 請仔細檢查每個字的部首與寫法", options: ["再接再厲", "再接再勵", "在接在厲", "在接在勵"], answer: "再接再厲", analysis: "「再接再厲」中的「厲」指磨快、勉勵，不可寫作「勵」。" },
+        { subject: "中文", title: "M2", instruction: "「這件突發事件讓大家面面相覷，不知道該如何是好。」句中「面面相覷」的意思是什麼？", visual: "🧐 觀察句子語意", options: ["互相看著對方，形容驚懼或不知所措的樣子", "每個人都非常有禮貌", "大家聚在一起互相討論", "看著同一個方向發呆"], answer: "互相看著對方，形容驚懼或不知所措的樣子", analysis: "「面面相覷」形容人們因驚懼、無可奈何或不知所措而互相望著。" },
+        { subject: "中文", title: "M3", instruction: "下列引號中的字，哪一組的讀音完全相同？", visual: "🗣️ 注意多音字的破音讀法", options: ["「彈」琴 / 飛「彈」", "「調」查 / 「調」節", "「稱」讚 / 勻「稱」", "「模」型 / 「模」樣"], answer: "「調」查 / 「調」節", analysis: "B組皆讀 diào；A組讀 tán / dàn；C組讀 chēng / chèn；D組讀 mó / mú。" },
+        { subject: "中文", title: "M4", instruction: "「花園裡的玫瑰花正對著太陽展現甜美的笑容。」這句話運用了哪一種修辭手法？", visual: "🌹 玫瑰花會展現笑容嗎？", options: ["比喻", "擬人", "排比", "誇張"], answer: "擬人", analysis: "將玫瑰花賦予人類「笑容」的行為，屬於擬人法。" },
+        { subject: "中文", title: "M5", instruction: "請選出最適合填入括號中的詞語：<br>「經過數月的艱苦訓練，校隊終於在決賽中（ ）對手，贏得冠軍。」", visual: "🏆 選擇最適當的動詞搭配", options: ["擊敗", "破壞", "推翻", "打擊"], answer: "擊敗", analysis: "在體育競賽中戰勝對手，最常用且最適當的詞語是「擊敗。」" },
+        { subject: "中文", title: "M6", instruction: "下列哪一個句子中沒有錯別字？", visual: "🔍 請找出藏在句子裡的錯字", options: ["這道題目太艱深，我思索了很久依然百思不得其解。", "老師常常鼓勵我們要勇往直前，不要半途而費。", "妹妹今天穿了一件非常漂量的新衣服。", "他因為粗心大意，結果在考試中犯了嚴重的措誤。"], answer: "這道題目太艱深，我思索了很久依然百思不得其解。", analysis: "B應為半途而「廢」；C應為漂「亮」；D應為「錯」誤。" },
+        { subject: "中文", title: "M7", instruction: "「雖然今天下著大雨，（ ）運動會還是照常舉行。」括號中填入哪個關聯詞最適當？", visual: "🔗 轉折複句的搭配", options: ["所以", "但是", "而且", "因為"], answer: "開但是", answer: "但是", analysis: "「雖然……但是……」是固定搭配的轉折關聯詞。" },
+        { subject: "中文", title: "M8", instruction: "下列哪一個選項是「高聳」的近義詞？", visual: "🏔️ 形容高大雄偉", options: ["低矮", "平坦", "巍峨", "寬闊"], answer: "巍峨", analysis: "「高聳」與「巍峨」都用來形容山勢或建築物高大雄偉。" },
+        { subject: "中文", title: "M9", instruction: "「不入虎穴，焉得虎子」這句諺語常用來比喻什麼？", visual: "🐯 走進老虎洞才能抓到小老虎", options: ["做事要量力而為", "不親臨險境或付出代價，就不能獲得成功", "對待動物要友善", "只要有恆心，鐵柱磨成針"], answer: "不親臨險境或付出代價，就不能獲得成功", analysis: "這句話的意思是不進老虎洞，就捉不到小老虎。比喻不冒危險，就不能成大事。" },
+        { subject: "中文", title: "M10", instruction: "「這座新建的圖書館藏書十分（ ），吸引了許多市民前往借閱。」括號中應填入哪個詞語？", visual: "📚 用於形容藏書與知識", options: ["豐富", "豐盛", "優厚", "熱鬧"], answer: "豐富", analysis: "形容書籍、知識、經驗等種類多、數量大時，使用「豐富」最恰當。「豐盛」多用於食物。" },
+        { subject: "中文", title: "M11", instruction: "下列哪一個句子的標點符號使用完全正確？", visual: "📍 注意引號和問號的位置", options: ["「你今天吃晚餐了嗎」媽媽關心地問。", "「你今天吃晚餐了嗎？」媽媽關心地問。", "媽媽關心地問：「你今天吃晚餐了嗎」？", "媽媽關心地問：「你今天吃晚餐了嗎。」"], answer: "「你今天吃晚餐了嗎？」媽媽關心地問。", analysis: "引文內是問句，問號應放在引號內，且句子結束在「問」字後加句號。" },
+        { subject: "中文", title: "M12", instruction: "「賞心悅目」常用來形容什麼？", visual: "🖼️ 眼睛與心情的雙重享受", options: ["食物非常美味可口", "風景或藝術品美好，看的人心情舒暢", "讀書專心認真", "身體健康、活力充沛"], answer: "風景或藝術品美好，看的人心情舒暢", analysis: "「賞心悅目」指因欣賞美好的景物而心情歡暢、眼睛喜悅。" },
+        { subject: "中文", title: "M13", instruction: "請選出部首不同的字：", visual: "🪵 找出混在裡面的異類部首", options: ["楓", "柏", "柳", "烈"], answer: "烈", analysis: "「楓、柏、柳」皆為木部，「烈」為火部（下面的四點底代表火）。" },
+        { subject: "中文", title: "M14", instruction: "「他平日沉默寡言，今天卻在台上口若懸河地演講，真是讓人大開眼界。」句中「口若懸河」的相反詞是什麼？", visual: "🗣️ 口若懸河 = 說話滔滔不絕", options: ["滔滔不絕", "能言善辯", "笨口拙舌", "侃侃而談"], answer: "笨口拙舌", analysis: "「口若懸河」形容能言善辯；相反詞為「笨口拙舌」或「沉默寡言」。" },
+        { subject: "中文", title: "M15", instruction: "唐代詩人孟郊的《遊子吟》中，「誰言寸草心，報得三春暉」主要是在讚美什麼？", visual: "🌱 小草與溫暖的太陽", options: ["大自然的美景", "春天的溫暖", "偉大的母愛", "朋友之間的友誼"], answer: "偉大的母愛", analysis: "這兩句詩以小草比喻子女，太陽比喻母親，表達子女難以回報母親深重的恩情。" },
+        { subject: "中文", title: "M16", instruction: "「虛心使人進步，驕傲使人落後。」這個句子運用了什麼修辭手法？", visual: "⚖️ 正反兩面的強烈對比", options: ["對比", "比喻", "設問", "誇張"], answer: "對比", analysis: "將「虛心進步」和「驕傲落後」正反並列，互相對照，屬於對比手法。" },
+        { subject: "中文", title: "M17", instruction: "請選出結構與「明亮的月光」相同的詞語：", visual: "🧩 結構：形容詞 + 的 + 名詞", options: ["認真地溫習", "高大的橡樹", "高高興興", "唱歌跳舞"], answer: "高大的橡樹", analysis: "「明亮的月光」是「形容詞 + 的 + 名詞」結構，「高大的橡樹」亦同。A是動詞短語，C是疊字。" },
+        { subject: "數學", title: "M18", instruction: "已知一個長方形的面積是 96 平方厘米，它的長是 12 厘米，請問它的周長是多少厘米？", visual: "📐 面積 = 96 cm²<br>長 = 12 cm", options: ["20", "40", "44", "8"], answer: "40", analysis: "寬 = 96 ÷ 12 = 8 厘米。周長 = (12 + 8) × 2 = 40 厘米。" },
+        { subject: "數學", title: "M19", instruction: "計算： 3.5 × 1.2 + 4.8 ÷ 0.6 = ？", visual: "➕✖️ 先乘除後加減", options: ["12.2", "8.2", "15", "4.2"], answer: "12.2", analysis: "先乘除後加減。3.5 × 1.2 = 4.2 ； 4.8 ÷ 0.6 = 8 ； 4.2 + 8 = 12.2。" },
+        { subject: "數學", title: "M20", instruction: "一條繩子長 5 米，剪去它的 2/5，還剩下多少米？", visual: "✂️ 分數的應用計算", options: ["2", "3", "4/5", "1/5"], answer: "3", analysis: "剪去的部分是 5 × 2/5 = 2 米。剩下的長度是 5 - 2 = 3 米。" },
+        { subject: "數學", title: "M21", instruction: "求 12 和 18 的最大公因數（HCF）是多少？", visual: "🔢 找出共同因數中最大的那一個", options: ["2", "3", "6", "36"], answer: "6", analysis: "12 的因數有 1,2,3,4,6,12；18 的因數有 1,2,3,6,9,18。最大的共同因數是 6。" },
+        { subject: "數學", title: "M22", instruction: "一個正方體的棱長總和是 72 厘米，請問這個正方體的體積是多少立方厘米？", visual: "📦 正方體總共有 12 條棱喔！", options: ["216", "36", "144", "6"], answer: "216", analysis: "正方體有 12 條棱。每條棱長 = 72 ÷ 12 = 6 厘米。體積 = 6 × 6 × 6 = 216 立方厘米。" },
+        { subject: "數學", title: "M23", instruction: "小明有 120 元，他用了全部錢的 35% 買了一本故事書，這本故事書價值多少元？", visual: "💰 百分率的乘法應用", options: ["35", "42", "45", "50"], answer: "42", analysis: "120 × 35% = 120 × 0.35 = 42 元。" },
+        { subject: "數學", title: "M24", instruction: "一個三角形的底是 14 厘米，高是 8 厘米，請問它的面積是多少平方厘米？", visual: "🔺 三角形面積公式是什麼？", options: ["112", "56", "22", "44"], answer: "56", analysis: "三角形面積 = 底 × 高 ÷ 2 = 14 × 8 ÷ 2 = 56 平方厘米。" },
+        { subject: "數學", title: "M25", instruction: "將最簡分數 7/20 化為百分數，應是多少？", visual: "📊 分母要擴分成 100 喔！", options: ["7%", "14%", "35%", "70%"], answer: "35%", analysis: "7/20 = (7×5) / (20×5) = 35/100 = 35%。" },
+        { subject: "數學", title: "M26", instruction: "某工廠今天有 190 人上班，有 10 人請假，請問這家工廠今天的出勤率是多少？", visual: "🏢 注意：總人數要包含請假的人", options: ["90%", "95%", "5%", "19%"], answer: "95%", analysis: "總人數 = 190 + 10 = 200 人。出勤率 = 190 ÷ 200 × 100% = 95%。" },
+        { subject: "數學", title: "M27", instruction: "計算： 4又2/3 - 1又5/6 = ？", visual: "🍕 帶分數的通分與借位減法", options: ["2又5/6", "3又1/3", "2又1/2", "3又5/6"], answer: "2又5/6", analysis: "通分後：4又4/6 - 1又5/6 = 3又10/6 - 1又5/6 = 2又5/6。" },
+        { subject: "數學", title: "M28", instruction: "一個圓形的直徑是 10 厘米，若圓周率以 3.14 計算，它的周長是多少厘米？", visual: "⭕ 圓周長 = 直徑 × 圓周率", options: ["31.4", "15.7", "78.5", "62.8"], answer: "31.4", analysis: "圓周長 = 直徑 × 圓周率 = 10 × 3.14 = 31.4 厘米。" },
+        { subject: "數學", title: "M29", instruction: "果園裡有蘋果樹 x 棵，梨樹的棵數比蘋果樹的 3 倍少 15 棵。請問梨樹有多少棵？（用含有字母的式子表示）", visual: "🍏 代數式的列式練習", options: ["3x + 15", "x/3 - 15", "3x - 15", "15 - 3x"], answer: "3x - 15", analysis: "蘋果樹的 3 倍是 3x，比它少 15 棵即為 3x - 15。" },
+        { subject: "數學", title: "M30", instruction: "解方程： 5x - 12 = 18，則 x = ？", visual: "⚖️ 運用等量公理求解方程", options: ["1.2", "5", "6", "30"], answer: "6", analysis: "5x = 18 + 12 -> 5x = 30 -> x = 6。" },
+        { subject: "數學", title: "M31", instruction: "有一組數據：12, 15, 18, 11, 14。這組數據的平均數是多少？", visual: "📊 平均數 = 總和 ÷ 個數", options: ["13", "14", "15", "16"], answer: "14", analysis: "平均數 = (12 + 15 + 18 + 11 + 14) ÷ 5 = 70 ÷ 5 = 14。" },
+        { subject: "數學", title: "M32", instruction: "一個平行四邊形的底是 12 厘米，面積是 72 平方厘米，請問它的高是多少厘米？", visual: "▱ 平行四邊形面積 = 底 × 高", options: ["6", "12", "3", "9"], answer: "6", analysis: "平行四邊形面積 = 底 × 高。高 = 面積 ÷ 底 = 72 ÷ 12 = 6 厘米。" },
+        { subject: "數學", title: "M33", instruction: "在一個比例尺為 1 : 200000 的地圖上，量得兩地之間的距離是 4 厘米，則兩地的實際距離是多少千米（公里）？", visual: "🗺️ 注意厘米與千米(公里)之間的單位換算", options: ["8", "80", "0.8", "800"], answer: "8", analysis: "實際距離 = 4 × 200000 = 800000 厘米 = 8000 米 = 8 千米。" },
+        { subject: "英文", title: "M34", instruction: "Choose the sentence with the correct grammatical structure:", visual: "📝 Fix the error with third-person singular", options: ["She don't like playing basketball after school.", "She doesn't likes playing basketball after school.", "She doesn't like playing basketball after school.", "She not like playing basketball after school."], answer: "She doesn't like playing basketball after school.", analysis: "With the third-person singular 'She', we use 'doesn't' followed by the base form of the verb 'like'." },
+        { subject: "英文", title: "M35", instruction: "Fill in the blank:<br>Look! The birds ________ happily in the sky right now.", visual: "🦅 Pay attention to the keywords 'Look!' and 'right now'", options: ["fly", "are flying", "is flying", "flew"], answer: "are flying", analysis: "The words 'Look!' and 'right now' indicate the Present Continuous tense. 'Birds' is plural, so we use 'are flying'." },
+        { subject: "英文", title: "M36", instruction: "What is the past tense form of the verb 'buy'?", visual: "🛍️ Irregular verb conjugation", options: ["buyed", "bought", "brought", "buying"], answer: "bought", analysis: "'Buy' is an irregular verb. Its past tense is 'bought'. ('Brought' is the past tense of 'bring'.)" },
+        { subject: "英文", title: "M37", instruction: "Fill in the blank:<br>Tom is the ________ student in our class; he always gets full marks.", visual: "💯 Comparing Tom with the entire class", options: ["smart", "smarter", "smartest", "more smart"], answer: "smartest", analysis: "The sentence compares Tom to the whole class, so the superlative adjective 'smartest' (with 'the') is required." },
+        { subject: "英文", title: "M38", instruction: "Fill in the blank:<br>I have been studying English ________ three years.", visual: "⏳ Present Perfect tense expression", options: ["since", "for", "at", "during"], answer: "for", analysis: "We use 'for' to express a period or duration of time (three years) in the present perfect tense." },
+        { subject: "英文", title: "M39", instruction: "Choose the word that has the OPPOSITE meaning of 'generous':", visual: "🗣️ Generous means willing to give or share", options: ["kind", "selfish", "mean", "helpful"], answer: "mean", analysis: "'Generous' means willing to give money or help. 'Mean' (or stingy) is its opposite. 'Selfish' is close but 'mean' directly opposes giving." },
+        { subject: "英文", title: "M40", instruction: "Fill in the blank:<br>If it ________ tomorrow, we will cancel our picnic.", visual: "🌧️ First Conditional structure", options: ["rains", "will rain", "rain", "rained"], answer: "rains", analysis: "In a first conditional sentence (If...), we use the simple present tense in the condition clause to refer to the future." },
+        { subject: "英文", title: "M41", instruction: "Fill in the blank:<br>The school is located ________ the supermarket and the library.", visual: "📍 Positioned between two distinct places", options: ["among", "between", "on", "next"], answer: "between", analysis: "We use 'between' when referring to a position positioned in the middle of two specific distinct objects/places." },
+        { subject: "英文", title: "M42", instruction: "Fill in the blank:<br>You ________ brush your teeth at least twice a day to keep them healthy.", visual: "🦷 Giving useful advice or suggestions", options: ["should", "may", "could", "would"], answer: "should", analysis: "'Should' is used to give advice or recommendations." },
+        { subject: "英文", title: "M43", instruction: "Choose the word that is spelled correctly:", visual: "🔤 Vocabulary check", options: ["Beautiful", "Beautifull", "Beatiful", "Bautifull"], answer: "Beautiful", analysis: "The correct spelling is B-E-A-U-T-I-F-U-L." },
+        { subject: "英文", title: "M44", instruction: "Fill in the blank:<br>That book belongs to Sarah. It is ________.", visual: "📘 Possessive pronouns", options: ["her", "hers", "she", "herself"], answer: "hers", analysis: "'Hers' is a possessive pronoun used here to replace 'her book'." },
+        { subject: "英文", title: "M45", instruction: "Fill in the blank:<br>We walked ________ into the room because the baby was sleeping.", visual: "🤫 Modifying the action 'walked'", options: ["quiet", "quietly", "quietness", "quieter"], answer: "quietly", analysis: "An adverb ('quietly') is needed to describe or modify the verb 'walked'." },
+        { subject: "英文", title: "M46", instruction: "What is the plural form of the word 'child'?", visual: "👦👧 More than one child", options: ["childs", "children", "childrens", "childes"], answer: "children", analysis: "'Child' has an irregular plural form, which is 'children'." },
+        { subject: "英文", title: "M47", instruction: "Fill in the blank:<br>Exciting news! Our team ________ the football match yesterday!", visual: "⚽ Time indicator: 'yesterday'", options: ["win", "wins", "won", "winning"], answer: "won", analysis: "The word 'yesterday' indicates that the action happened in the past, so we use the past tense 'won'." },
+        { subject: "英文", title: "M48", instruction: "Fill in the blank:<br>I am not interested ________ watching horror movies.", visual: "🎬 Fixed adjective + preposition pairing", options: ["on", "at", "with", "in"], answer: "in", analysis: "The phrase 'interested in' is a fixed adjective + preposition combination." },
+        { subject: "英文", title: "M49", instruction: "Fill in the blank:<br>My father is an ________ person. He always tells the truth.", visual: "🗣️ Look at the article 'an'", options: ["honest", "helpful", "kind", "smart"], answer: "honest", analysis: "The article 'an' requires a word starting with a vowel sound. 'Honest' has a silent 'h' and starts with a vowel sound, and fits the meaning." },
+        { subject: "英文", title: "M50", instruction: "Choose the correct question word:<br>________ did you go for your summer holiday last year? 'To Japan.'", options: ["When", "Where", "Why", "Who"], answer: "Where", analysis: "The answer 'To Japan' is a place, so the correct question word is 'Where'." }
+    ];
+
+    // 晴晴的題庫 (5歲幼兒 英文、顏色、動物綜合趣味題庫共50題)
+    const chingMissions = [
+        { subject: "顏色 (Colors)", title: "M1", instruction: "What color is a banana?<br>(香蕉是什麼顏色的？)", visual: "🍌✨", options: ["Yellow (黃色)", "Red (紅色)", "Blue (藍色)", "Green (綠色)"], answer: "Yellow (黃色)", analysis: "香蕉成熟時是黃色 (Yellow) 的。" },
+        { subject: "顏色 (Colors)", title: "M2", instruction: "What color is an apple?<br>(蘋果通常是什麼顏色的？)", visual: "🍎✨", options: ["Blue (藍色)", "Red (紅色)", "Purple (紫色)", "Black (黑色)"], answer: "Red (紅色)", analysis: "我們最常見的美味蘋果是紅色 (Red) 的。" },
+        { subject: "顏色 (Colors)", title: "M3", instruction: "What color is the sky on a sunny day?<br>(晴天時天空是什麼顏色？)", visual: "☀️☁️", options: ["Green (綠色)", "Pink (粉紅色)", "Blue (藍色)", "Yellow (黃色)"], answer: "Blue (藍色)", analysis: "晴朗的天空是美麗的藍色 (Blue)。" },
+        { subject: "顏色 (Colors)", title: "M4", instruction: "What color is grass?<br>(草地是什麼顏色的？)", visual: "🌱🐾", options: ["Green (綠色)", "Orange (橙色)", "Purple (紫色)", "White (白色)"], answer: "Green (綠色)", analysis: "大自然裡的草和樹葉通常是綠色 (Green) 的。" },
+        { subject: "顏色 (Colors)", title: "M5", instruction: "What color is milk?<br>(牛奶是什麼顏色的？)", visual: "🥛🥛", options: ["Red (紅色)", "Black (黑色)", "Yellow (黃色)", "White (白色)"], answer: "White (白色)", analysis: "好喝又健康的牛奶是白色 (White) 的。" },
+        { subject: "顏色 (Colors)", title: "M6", instruction: "What color is a carrot?<br>(胡蘿蔔是什麼顏色的？)", visual: "🥕🐰", options: ["Orange (橙色)", "Blue (藍色)", "Pink (粉紅色)", "Grey (灰色)"], answer: "Orange (橙色)", analysis: "兔子最愛吃的胡蘿蔔是橙色 (Orange) 的。" },
+        { subject: "顏色 (Colors)", title: "M7", instruction: "What color is a flamingo bird?<br>(紅鶴/火烈鳥是什麼顏色的？)", visual: "🦩✨", options: ["Green (綠色)", "Pink (粉紅色)", "Black (黑色)", "Brown (咖啡色)"], answer: "Pink (粉紅色)", analysis: "紅鶴長著一身漂亮的粉紅色 (Pink) 羽毛。" },
+        { subject: "顏色 (Colors)", title: "M8", instruction: "What color is chocolate?<br>(巧克力通常是什麼顏色的？)", visual: "🍫😋", options: ["Brown (咖啡色/棕色)", "Blue (藍色)", "Green (綠色)", "Purple (紫色)"], answer: "Brown (咖啡色/棕色)", analysis: "好吃的巧克力通常是咖啡色 (Brown) 的。" },
+        { subject: "顏色 (Colors)", title: "M9", instruction: "What color is a crow or a tire?<br>(烏鴉或是車輪胎是什麼顏色的？)", visual: "🐦‍⬛🛞", options: ["White (白色)", "Yellow (黃色)", "Black (黑色)", "Red (紅色)"], answer: "Black (黑色)", analysis: "烏鴉和輪胎都是黑色 (Black) 的。" },
+        { subject: "顏色 (Colors)", title: "M10", instruction: "What color are grapes often?<br>(葡萄通常是什麼顏色的？)", visual: "🍇🍇", options: ["Purple (紫色)", "Orange (橙色)", "Blue (藍色)", "Pink (粉紅色)"], answer: "Purple (紫色)", analysis: "一串串圓圓的葡萄通常是紫色 (Purple) 或綠色的。" },
+        { subject: "顏色 (Colors)", title: "M11", instruction: "If you mix Red and Yellow, what color do you get?<br>(紅色加黃色會變成什麼顏色？)", visual: "🔴 + 🟡 = ❓", options: ["Blue (藍色)", "Green (綠色)", "Orange (橙色)", "Black (黑色)"], answer: "Orange (橙色)", analysis: "紅色加上黃色會調配出魔術般的橙色 (Orange)。" },
+        { subject: "顏色 (Colors)", title: "M12", instruction: "What color is a strawberry?<br>(草莓是什麼顏色的？)", visual: "🍓🍓", options: ["Red (紅色)", "Yellow (黃色)", "Green (綠色)", "Blue (藍色)"], answer: "Red (紅色)", analysis: "甜甜的草莓表面是紅色 (Red) 的。" },
+        { subject: "顏色 (Colors)", title: "M13", instruction: "What color is an elephant?<br>(大象的皮膚通常是什麼顏色的？)", visual: "🐘🐘", options: ["Grey (灰色)", "Yellow (黃色)", "Pink (粉紅色)", "Orange (橙色)"], answer: "Grey (灰色)", analysis: "體型大大的大象是灰色 (Grey) 的。" },
+        { subject: "顏色 (Colors)", title: "M14", instruction: "What color is the nighttime sky?<br>(夜晚黑漆漆的天空是什麼顏色？)", visual: "🌙✨", options: ["White (白色)", "Dark Blue / Black (深藍色/黑色)", "Yellow (黃色)", "Pink (粉紅色)"], answer: "Dark Blue / Black (深藍色/黑色)", analysis: "睡覺時間到了，夜晚的天空會變成黑色 (Black)。" },
+        { subject: "顏色 (Colors)", title: "M15", instruction: "What color is a lemon?<br>(檸檬是什麼顏色的？)", visual: "🍋🍋", options: ["Yellow (黃色)", "Purple (紫色)", "Red (紅色)", "Brown (咖啡色)"], answer: "Yellow (黃色)", analysis: "酸酸的檸檬外皮是黃色 (Yellow) 的。" },
+        { subject: "顏色 (Colors)", title: "M16", instruction: "What color is snow?<br>(冬天下雪時，雪花是什麼顏色的？)", visual: "❄️☃️", options: ["Green (綠色)", "Black (黑色)", "White (白色)", "Blue (藍色)"], answer: "White (白色)", analysis: "冷冰冰的雪是純白色 (White) 的。" },
+        { subject: "顏色 (Colors)", title: "M17", instruction: "What color is a basketball?<br>(一顆標準的籃球是什麼顏色的？)", visual: "🏀🏀", options: ["Orange (橙色)", "Green (綠色)", "Purple (紫色)", "Pink (粉紅色)"], answer: "Orange (橙色)", analysis: "我們拍打的籃球通常是橙色 (Orange) 的。" },
+        { subject: "動物 (Animals)", title: "M18", instruction: "Which animal says 'Moo'?<br>(哪種動物會發出『哞哞』的叫聲？)", visual: "🚜🌾", options: ["Cat (貓咪)", "Cow (乳牛)", "Dog (小狗)", "Duck (鴨子)"], answer: "Cow (乳牛)", analysis: "乳牛 (Cow) 在農場裡會發出 'Moo' 的聲音。" },
+        { subject: "動物 (Animals)", title: "M19", instruction: "Which animal has a very long neck?<br>(哪種動物脖子長長的，可以吃到樹頂的葉子？)", visual: "🌳🍃", options: ["Giraffe (長頸鹿)", "Monkey (猴子)", "Pig (小豬)", "Rabbit (兔子)"], answer: "Giraffe (長頸鹿)", analysis: "長頸鹿 (Giraffe) 擁有世界上最長的脖子。" },
+        { subject: "動物 (Animals)", title: "M20", instruction: "Which animal says 'Meow'?<br>(哪種小動物最喜歡吃魚，還會叫『喵喵』？)", visual: "🐟🐾", options: ["Dog (小狗)", "Lion (獅子)", "Cat (貓咪)", "Bear (大熊)"], answer: "Cat (貓咪)", analysis: "可愛的貓咪 (Cat) 會發出 'Meow' 的叫聲。" },
+        { subject: "動物 (Animals)", title: "M21", instruction: "Which animal has long ears and hops around?<br>(哪種動物耳朵長長的，走路用跳的，喜歡吃胡蘿蔔？)", visual: "🥕💨", options: ["Rabbit (兔子)", "Elephant (大象)", "Turtle (烏龜)", "Horse (馬)"], answer: "Rabbit (兔子)", analysis: "小兔子 (Rabbit) 有長耳朵，喜歡蹦蹦跳跳。" },
+        { subject: "動物 (Animals)", title: "M22", instruction: "Which animal says 'Woof Woof'?<br>(哪種動物是人類的好朋友，會搖尾巴叫『汪汪』？)", visual: "🦴🐕", options: ["Cat (貓咪)", "Dog (小狗)", "Bird (小鳥)", "Frog (青蛙)"], answer: "Dog (小狗)", analysis: "忠心的小狗 (Dog) 叫聲是 'Woof' 或 'Bark'。" },
+        { subject: "動物 (Animals)", title: "M23", instruction: "Which animal lives in the water and swims with fins?<br>(哪種動物住在水裡，會在大海裡游來游去？)", visual: "waves🪸", options: ["Bird (小鳥)", "Fish (魚)", "Monkey (猴子)", "Tiger (老虎)"], answer: "Fish (魚)", analysis: "小魚 (Fish) 住在水裡，用魚鰭游泳。" },
+        { subject: "動物 (Animals)", title: "M24", instruction: "Which animal loves to eat bananas and swing on trees?<br>(哪種動物最喜歡吃香蕉，還會在樹上盪來盪去？)", visual: "🍌🐒", options: ["Monkey (猴子)", "Lion (獅子)", "Sheep (綿羊)", "Chicken (小雞)"], answer: "Monkey (猴子)", analysis: "調皮的猴子 (Monkey) 很會爬樹，愛吃香蕉。" },
+        { subject: "動物 (Animals)", title: "M25", instruction: "Which animal is the 'King of the Jungle' and roars loudly?<br>(誰是萬獸之王，會發出大聲的吼叫？)", visual: "👑🦁", options: ["Mouse (小老鼠)", "Lion (獅子)", "Duck (鴨子)", "Panda (大貓熊)"], answer: "Lion (獅子)", analysis: "獅子 (Lion) 擁有大鬃毛，被稱為萬獸之王。" },
+        { subject: "動物 (Animals)", title: "M26", instruction: "Which animal says 'Quack Quack' and swims in the pond?<br>(哪種動物在池塘裡游水，叫聲是『呱呱』？)", visual: "🪿💦", options: ["Duck (鴨子)", "Horse (馬)", "Cat (貓咪)", "Elephant (大象)"], answer: "Duck (鴨子)", analysis: "黃色的小鴨子 (Duck) 叫聲是 'Quack'。" },
+        { subject: "動物 (Animals)", title: "M27", instruction: "Which animal has black and white stripes all over its body?<br>(哪種動物身上長滿了黑白相間的條紋？)", visual: "🦓🦓", options: ["Tiger (老虎)", "Zebra (斑馬)", "Giraffe (長頸鹿)", "Pig (小豬)"], answer: "Zebra (斑馬)", analysis: "斑馬 (Zebra) 看起來就像穿了黑白條紋的衣服。" },
+        { subject: "動物 (Animals)", title: "M28", instruction: "Which big animal has a very long nose called a trunk?<br>(哪種好大的動物有長長的鼻子，還會噴水？)", visual: "💦🐘", options: ["Rabbit (兔子)", "Mouse (小老鼠)", "Elephant (大象)", "Dog (小狗)"], answer: "Elephant (大象)", analysis: "大象 (Elephant) 有一個萬能的長鼻子。" },
+        { subject: "動物 (Animals)", title: "M29", instruction: "Which animal gives us wool and says 'Baa'?<br>(哪種動物長滿白色蓬鬆的毛，叫聲是『咩咩』？)", visual: "☁️", options: ["Sheep (綿羊)", "Wolf (大野狼)", "Lion (獅子)", "Cow (乳牛)"], answer: "Sheep (綿羊)", analysis: "綿羊 (Sheep) 的毛可以拿來做溫暖的衣服。" },
+        { subject: "動物 (Animals)", title: "M30", instruction: "Which small animal loves cheese and says 'Squeak'?<br>(哪種小小瘦瘦的動物喜歡偷吃起司，還長著長尾巴？)", visual: "🧀🐭", options: ["Bear (大熊)", "Mouse (小老鼠)", "Zebra (斑馬)", "Horse (馬)"], answer: "Mouse (小老鼠)", analysis: "小老鼠 (Mouse) 體型小小，叫聲吱吱叫。" },
+        { subject: "動物 (Animals)", title: "M31", instruction: "Which animal carries a hard shell on its back and walks slowly?<br>(哪種動物背著重重的殼，走路慢吞吞？)", visual: "🐢🐢", options: ["Cheetah (獵豹)", "Turtle (烏龜)", "Monkey (猴子)", "Bird (小鳥)"], answer: "Turtle (烏龜)", analysis: "烏龜 (Turtle) 走路非常慢，但遇到危險會縮進殼裡。" },
+        { subject: "動物 (Animals)", title: "M32", instruction: "Which animal flies in the sky and sings songs in the morning?<br>(哪種動物有翅膀會在天上飛，早上還會唱歌？)", visual: "🐦☀️", options: ["Fish (魚)", "Snake (蛇)", "Bird (小鳥)", "Cat (貓咪)"], answer: "Bird (小鳥)", analysis: "小鳥 (Bird) 住在樹上，會在天空自由飛翔。" },
+        { subject: "動物 (Animals)", title: "M33", instruction: "Which animal lives in China, eats bamboo, and looks like a big teddy bear?<br>(哪種黑白色的動物最喜歡吃竹子？)", visual: "🐼🎋", options: ["Panda (大貓熊)", "Lion (獅子)", "Kangaroo (袋鼠)", "Fox (狐狸)"], answer: "Panda (大貓熊)", analysis: "大貓熊 (Panda) 圓滾滾的，最愛吃竹葉。" },
+        { subject: "英文基礎 (English)", title: "M34", instruction: "Which letter comes first in the ABC song?<br>(英文26個字母中的第一個字母是誰？)", visual: "🎵🔤", options: ["B", "C", "A", "Z"], answer: "A", analysis: "ABC歌的第一句就是：A, B, C, D..." },
+        { subject: "英文基礎 (English)", title: "M35", instruction: "What letter does the word 'APPLE' start with?<br>(蘋果 Apple 的第一個字母是什麼？)", visual: "🍎✍️", options: ["A", "B", "M", "P"], answer: "A", analysis: "A is for Apple. (A 代表蘋果)" },
+        { subject: "英文基礎 (English)", title: "M36", instruction: "What letter does the word 'CAT' start with?<br>(貓咪 Cat 的第一個字母是什麼？)", visual: "🐱✍️", options: ["S", "C", "D", "O"], answer: "C", analysis: "C is for Cat. (C 代表貓咪)" },
+        { subject: "英文基礎 (English)", title: "M37", instruction: "Find the small letter (lowercase) for 'G':<br>(大寫字母『G』的小寫寫法是哪一個？)", visual: "G ➡️ ❓", options: ["b", "d", "g", "q"], answer: "g", analysis: "大寫是 G，小寫圓圓帶個勾的是 g。" },
+        { subject: "英文基礎 (English)", title: "M38", instruction: "Find the small letter (lowercase) for 'R':<br>(大寫字母『R』的小寫寫法是哪一個？)", visual: "R ➡️ ❓", options: ["r", "n", "m", "v"], answer: "r", analysis: "大寫是 R，小寫像小草發芽的是 r。" },
+        { subject: "英文基礎 (English)", title: "M39", instruction: "What letter makes the sound 'Buh-Buh' like in 'Ball' and 'Baby'?<br>(哪個字母發音是『ㄅㄨ~ㄅㄨ~』的聲音？)", visual: "👶⚽", options: ["A", "B", "C", "D"], answer: "B", analysis: "字母 B 的發音是 /b/，就像 Ball (球)。" },
+        { subject: "英文基礎 (English)", title: "M40", instruction: "What letter does the word 'DOG' start with?<br>(小狗 Dog 的第一個字母是什麼？)", visual: "🐶✍️", options: ["D", "G", "P", "Q"], answer: "D", analysis: "D is for Dog. (D 代表小狗)" },
+        { subject: "英文基礎 (English)", title: "M41", instruction: "How many fingers do you have on one hand?<br>(你的一隻手手上有幾根手指頭？)", visual: "✋✨", options: ["Three (3)", "Four (4)", "Five (5)", "Ten (10)"], answer: "Five (5)", analysis: "數一數：One, Two, Three, Four, Five! 一隻手有 5 根手指。" },
+        { subject: "英文基礎 (English)", title: "M42", instruction: "What letter does the word 'SUN' start with?<br>(太陽 Sun 的第一個字母是什麼？)", visual: "☀️✍️", options: ["S", "U", "N", "W"], answer: "S", analysis: "S is for Sun. (S 代表太陽)" },
+        { subject: "英文基礎 (English)", title: "M43", instruction: "Which letter looks like a big round circle?<br>(哪個字母長得最像一個大圓圈？)", visual: "⭕🔍", options: ["I", "X", "O", "L"], answer: "O", analysis: "字母 O 圓滾滾的，就像一個圈圈。" },
+        { subject: "英文基礎 (English)", title: "M44", instruction: "Complete the pattern: A, B, C, ___?<br>(字母接龍：A, B, C，下一個是誰？)", visual: "A ➡️ B ➡️ C ➡️ ❓", options: ["E", "F", "D", "G"], answer: "D", analysis: "字母順序是 A -> B -> C -> D。" },
+        { subject: "英文基礎 (English)", title: "M45", instruction: "What word is a greeting when you see someone?<br>(看到老師或朋友時，我們要說哪句英文打招呼？)", visual: "👋😊", options: ["Goodbye (再見)", "Hello (你好)", "Thank you (謝謝)", "Sorry (對不起)"], answer: "Hello (你好)", analysis: "打招呼時要大聲微笑說 'Hello!' 或 'Hi!'" },
+        { subject: "英文基礎 (English)", title: "M46", instruction: "What letter does the word 'MILK' start with?<br>(牛奶 Milk 的第一個字母是什麼？)", visual: "🥛✍️", options: ["W", "N", "M", "V"], answer: "M", analysis: "M is for Milk. (M 代表牛奶)" },
+        { subject: "英文基礎 (English)", title: "M47", instruction: "Which one is the BIG letter (capital) for 'e'?<br>(小寫字母『e』的大寫寫法是哪一個？)", visual: "e ➡️ ❓", options: ["F", "E", "H", "T"], answer: "E", analysis: "小寫是 e，大寫有三橫的是 E。" },
+        { subject: "英文基礎 (English)", title: "M48", instruction: "If you are happy, what do you do with your mouth?<br>(當你很高興的時候，你的嘴巴會做什麼表情？)", visual: "😄✨", options: ["Cry (哭哭)", "Smile (微笑/笑)", "Sleep (睡覺)", "Shout (生氣叫)"], answer: "Smile (微笑/笑)", analysis: "高興的時候要露出甜美的微笑 (Smile)。" },
+        { subject: "英文基礎 (English)", title: "M49", instruction: "What letter does the word 'ZEBRA' start with?<br>(斑馬 Zebra 的第一個字母，也就是最後一個字母是誰？)", visual: "🦓✍️", options: ["X", "Y", "Z", "A"], answer: "Z", analysis: "Z is for Zebra. (Z 代表斑馬)" },
+        { subject: "英文基礎 (English)", title: "M50", instruction: "What do we say when someone gives us a toy or candy?<br>(當別人送你玩具或糖果時，你要說什麼？)", visual: "🎁🍬", options: ["Thank you (謝謝你)", "No (不要)", "Please (請)", "Good morning (早安)"], answer: "Thank you (謝謝你)", analysis: "當一個有禮貌的小朋友，收到禮物要說 'Thank you'。" }
+    ];
 
     function initAudio() {
         if (!audioCtx) {
@@ -324,90 +543,36 @@
         }
     }
 
-    // 隊員選擇邏輯 (包含 晴晴)
     function selectMember(name) {
         playSound('laser');
+        currentSelectedMember = name;
+        
         if (name === '亦樂') {
-            currentSelectedMember = "亦樂";
             document.getElementById('welcome-title').innerText = "LOK'S MISSION";
             document.getElementById('welcome-subtitle').innerText = "超人防衛隊：亦樂特訓基地";
+            document.getElementById('welcome-icon').innerText = "⚡🦸‍♂️ ⚔️ 👾⚡";
             document.getElementById('screen-select-member').classList.remove('active');
             document.getElementById('screen-start').classList.add('active');
-        } else {
-            // 允喬、立言、晴晴 顯示製作中提示
-            const overlay = document.getElementById('feedback-overlay');
-            const box = document.getElementById('feedback-box');
-            box.innerHTML = `<span style="font-size:1.8rem; display:block; margin-bottom:10px;">MISSION LOADING...</span><span style="font-size:2.3rem; color:#ffcc00;">🛠️ ${name}的任務製作中！</span>`;
-            box.className = "info-style";
-            overlay.classList.add('show-overlay');
-            
-            setTimeout(() => {
-                overlay.classList.remove('show-overlay');
-            }, 1800);
+        } else if (name === '允喬') {
+            document.getElementById('welcome-title').innerText = "KIU'S MISSION";
+            document.getElementById('welcome-subtitle').innerText = "超人防衛隊：喬喬精進特訓營";
+            document.getElementById('welcome-icon').innerText = "🛡️✨ 📖 📐✨🛡️";
+            document.getElementById('screen-select-member').classList.remove('active');
+            document.getElementById('screen-start').classList.add('active');
+        } else if (name === '立言') {
+            document.getElementById('welcome-title').innerText = "YIN'S MISSION";
+            document.getElementById('welcome-subtitle').innerText = "超人防衛隊：立言學科基地";
+            document.getElementById('welcome-icon').innerText = "🔮📚 📐 📝🔮";
+            document.getElementById('screen-select-member').classList.remove('active');
+            document.getElementById('screen-start').classList.add('active');
+        } else if (name === '晴晴') {
+            document.getElementById('welcome-title').innerText = "CHING'S MISSION";
+            document.getElementById('welcome-subtitle').innerText = "超人防衛隊：晴晴趣味特訓營";
+            document.getElementById('welcome-icon').innerText = "🌸🎨 🦁 🔤🌸";
+            document.getElementById('screen-select-member').classList.remove('active');
+            document.getElementById('screen-start').classList.add('active');
         }
     }
-
-    const baseMissions = [
-        {
-            title: "M1: 我們的戰友 (Pronouns)",
-            instruction: "Who is he? 🦸‍♂️",
-            visual: "🦸‍♂️",
-            options: ["He is Ultraman.", "She is Ultraman.", "They are Ultraman.", "It is Ultraman."],
-            answer: "He is Ultraman."
-        },
-        {
-            title: "M2: 我們的戰友 (Pronouns)",
-            instruction: "Who is she? 👩‍🔬",
-            visual: "👩‍🔬",
-            options: ["He is Science Officer.", "She is Science Officer.", "We are Team.", "You are Cadet."],
-            answer: "She is Science Officer."
-        },
-        {
-            title: "M3: 我們的戰友 (Pronouns)",
-            instruction: "Who are they? 🦸‍♂️🦸‍♂️🦸‍♂️",
-            visual: "🦸‍♂️🦸‍♂️🦸‍♂️",
-            options: ["We are team.", "You are team.", "It is team.", "They are our team."],
-            answer: "They are our team."
-        },
-        {
-            title: "M4: 情報掃描 (Numbers & Colors)",
-            instruction: "Scan the monsters! How many RED monsters? 🔴👾",
-            visual: "🔴👾 🔴👾 🔴👾<br>🔵👾 🔵👾",
-            options: ["Two blue monsters", "Three red monsters", "Three blue monsters", "Five red monsters"],
-            answer: "Three red monsters"
-        },
-        {
-            title: "M5: 遠近偵測雷達 (This / That)",
-            instruction: "The monster is FAR away! 📡 ⋯ ⋯ 👾",
-            visual: "📡 ⋯ ⋯ ⋯ ⋯ 👾",
-            options: ["This is a monster.", "That is a monster.", "These are monsters.", "Those are monsters."],
-            answer: "That is a monster."
-        },
-        {
-            title: "M6: 遠近偵測雷達 (These / Those)",
-            instruction: "Look! MANY monsters are NEAR! ⚡👾👾",
-            visual: "⚡ 👾 👾",
-            options: ["This is monsters.", "That is monsters.", "These are monsters.", "Those are monsters."],
-            answer: "These are monsters."
-        },
-        {
-            title: "M7: 躲貓貓任務 (In / On / Under)",
-            instruction: "Where is the monster? 👾🏢",
-            visual: "👾<br>🏢",
-            options: ["in the building", "on the building", "under the building", "next to the building"],
-            answer: "on the building"
-        },
-        {
-            title: "M8: 躲貓貓任務 (In / On / Under)",
-            instruction: "Where is the monster now? 🏢👇👾",
-            visual: "🏢<br>👇<br>👾",
-            options: ["in the building", "on the building", "under the building", "you are the building"],
-            answer: "under the building"
-        }
-    ];
-
-    let gameMissions = [];
-    let currentMission = 0;
 
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -417,17 +582,32 @@
         return array;
     }
 
-    function initGameMissions() {
-        gameMissions = JSON.parse(JSON.stringify(baseMissions));
-        shuffle(gameMissions);
-        gameMissions.forEach(m => {
-            shuffle(m.options);
-        });
-    }
-
     function startGame() {
         playSound('laser');
-        initGameMissions();
+        
+        if (currentSelectedMember === '亦樂') {
+            gameMissions = JSON.parse(JSON.stringify(lokMissions));
+            shuffle(gameMissions);
+        } else if (currentSelectedMember === '允喬') {
+            // 從50題中隨機抽取8題進行測試
+            let allKiu = JSON.parse(JSON.stringify(kiuMissions));
+            shuffle(allKiu);
+            gameMissions = allKiu.slice(0, 8);
+        } else if (currentSelectedMember === '立言') {
+            let allYin = JSON.parse(JSON.stringify(yinMissions));
+            shuffle(allYin);
+            gameMissions = allYin.slice(0, 8);
+        } else if (currentSelectedMember === '晴晴') {
+            let allChing = JSON.parse(JSON.stringify(chingMissions));
+            shuffle(allChing);
+            gameMissions = allChing.slice(0, 8);
+        }
+        
+        // 亦樂以外的關卡選項保留原 A) B) C) D) 固定排序（更符合傳統考試看選項練習）
+        if (currentSelectedMember === '亦樂') {
+            gameMissions.forEach(m => shuffle(m.options));
+        }
+        
         currentMission = 0;
         document.getElementById('screen-start').classList.remove('active');
         document.getElementById('screen-game').classList.add('active');
@@ -436,12 +616,12 @@
 
     function loadMission() {
         const mission = gameMissions[currentMission];
+        document.getElementById('mission-subject').innerText = mission.subject;
         document.getElementById('mission-title').innerText = `Mission ${currentMission + 1} / ${gameMissions.length}`;
         document.getElementById('mission-instruction').innerHTML = mission.instruction;
         document.getElementById('mission-visual').innerHTML = mission.visual;
         
         const optionsContainer = document.getElementById('mission-options');
-        
         optionsContainer.style.display = 'none';
         optionsContainer.innerHTML = '';
         
@@ -455,7 +635,7 @@
             
             button.onclick = function() {
                 button.blur();
-                checkAnswer(opt, mission.answer);
+                checkAnswer(opt, mission.answer, mission.analysis);
             };
             optionsContainer.appendChild(button);
         });
@@ -468,34 +648,41 @@
         document.getElementById('progress').style.width = progressPercent + '%';
     }
 
-    function checkAnswer(selectedOpt, correctOpt) {
+    function checkAnswer(selectedOpt, correctOpt, analysis) {
         const overlay = document.getElementById('feedback-overlay');
         const box = document.getElementById('feedback-box');
+        const textElem = document.getElementById('feedback-text');
+        const analysisElem = document.getElementById('feedback-analysis');
+        const nextBtn = document.getElementById('feedback-next-btn');
+        
+        analysisElem.innerHTML = analysis || "保持下去，完成特訓！";
+        nextBtn.innerText = "NEXT ➡️";
         
         if (selectedOpt === correctOpt) {
             playSound('correct');
-            box.innerText = "EXCELLENT! 🎖️";
+            textElem.innerText = "EXCELLENT! 🎖️";
             box.className = "correct-style";
-            overlay.classList.add('show-overlay');
-            
-            setTimeout(() => {
-                overlay.classList.remove('show-overlay');
-                currentMission++;
-                if (currentMission < gameMissions.length) {
-                    loadMission();
-                } else {
-                    winGame();
-                }
-            }, 1200);
+            isAnswerCorrect = true;
         } else {
             playSound('wrong');
-            box.innerText = "TRY AGAIN! ⚡";
+            textElem.innerText = "TRY AGAIN! ⚡";
             box.className = "wrong-style";
-            overlay.classList.add('show-overlay');
-            
-            setTimeout(() => {
-                overlay.classList.remove('show-overlay');
-            }, 1000);
+            isAnswerCorrect = false;
+        }
+        overlay.classList.add('show-overlay');
+    }
+
+    function closeFeedback() {
+        const overlay = document.getElementById('feedback-overlay');
+        overlay.classList.remove('show-overlay');
+        
+        if (isAnswerCorrect) {
+            currentMission++;
+            if (currentMission < gameMissions.length) {
+                loadMission();
+            } else {
+                winGame();
+            }
         }
     }
 
@@ -503,6 +690,37 @@
         playSound('victory');
         document.getElementById('progress').style.width = '100%';
         document.getElementById('screen-game').classList.remove('active');
+        
+        const prizeImg = document.getElementById('win-prize-img');
+        const winSubtitle = document.getElementById('win-subtitle');
+        const winComment = document.getElementById('win-comment');
+        
+        if (currentSelectedMember === '亦樂') {
+            winSubtitle.style.color = "var(--warning)";
+            winSubtitle.innerText = "你獲得了終極陀螺獎勵！";
+            winComment.innerText = "3, 2, 1, Go Shoot!! 恭喜亦樂完成挑戰！";
+            prizeImg.src = "https://images.unsplash.com/photo-1611605698335-8b15d27e0397?auto=format&fit=crop&w=300&q=80";
+            prizeImg.className = "prize-image spin-animation";
+        } else if (currentSelectedMember === '允喬') {
+            winSubtitle.style.color = "var(--secondary)";
+            winSubtitle.innerText = "你獲得了防衛隊炫彩極光盾！";
+            winComment.innerText = "堅不可摧的防禦守護！恭喜喬喬順利通關！";
+            prizeImg.src = "https://cdn-icons-png.flaticon.com/512/9194/9194093.png";
+            prizeImg.className = "prize-image";
+        } else if (currentSelectedMember === '立言') {
+            winSubtitle.style.color = "var(--warning)";
+            winSubtitle.innerText = "你獲得了魔幻水晶能量寶石！";
+            winComment.innerText = "智力與智慧的象徵！恭喜立言全對通關！";
+            prizeImg.src = "https://cdn-icons-png.flaticon.com/512/3067/3067423.png";
+            prizeImg.className = "prize-image";
+        } else if (currentSelectedMember === '晴晴') {
+            winSubtitle.style.color = "var(--pink)";
+            winSubtitle.innerText = "你獲得了夢幻櫻花星空棒棒糖！";
+            winComment.innerText = "甜甜的驚喜！恭喜晴晴完成了趣味特訓！";
+            prizeImg.src = "https://cdn-icons-png.flaticon.com/512/2652/2652230.png";
+            prizeImg.className = "prize-image spin-animation";
+        }
+        
         document.getElementById('screen-win').classList.add('active');
     }
 
