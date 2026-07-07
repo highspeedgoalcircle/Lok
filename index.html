@@ -318,7 +318,13 @@
     let currentSelectedMember = "";
     let gameMissions = [];
     let currentMission = 0;
-    let isAnswerCorrect = false;
+    
+let isAnswerCorrect = false;
+let score = 0;
+let streak = 0;
+let highestStreak = 0;
+let answeredLocked = false;
+
 
     // 亦樂的題庫 (包含原有的 8 題，以及新加入的中文 17 題、英文 17 題、數學 16 題，共 58 題)
     const lokMissions = [
@@ -435,7 +441,14 @@
         { subject: "數學科", title: "M41", instruction: "小明下午 2 時 15 分開始做功課，下午 3 時正完成。他做了多久功課？", visual: "⏱️ 計算經過的時間", options: ["A) 35 分鐘", "B) 45 分鐘", "C) 55 分鐘", "D) 60 分鐘"], answer: "B) 45 分鐘", analysis: "從 2:15 到 3:00 剛好經過了 45 分鐘。" },
         { subject: "數學科", title: "M42", instruction: "2 米等於多少厘米？", visual: "📏 長度單位換算關係", options: ["A) 20 厘米", "B) 200 厘米", "C) 2000 厘米", "D) 2 厘米"], answer: "B) 200 厘米", analysis: "1 米 = 100 厘米，所以 2 米 = 200 厘米。" },
         { subject: "數學科", title: "M43", instruction: "蛋糕被平分成 8 塊，小紅吃了其中的 3 塊。小紅吃了這份蛋糕的幾分之幾？", visual: "🍰 分數的基本概念", options: ["A) 1/8", "B) 3/8", "C) 5/8", "D) 8/3"], answer: "B) 3/8", analysis: "平分成 8 份代表分母是 8，吃了 3 份分子是 3，即為八分之三 (3/8)。" },
-        { subject: "數學科", title: "M44", instruction: "以下哪一個算式的餘數是 2？", visual: "➗ 算一算哪一個除不盡且餘2", options: ["A) 15 ÷ 3", "B) 20 ÷ 6", "C) 25 ÷ 4", "D) 32 ÷ 5"], answer: "B) 20 ÷ 6", analysis: "A餘0；B中 20 ÷ 6 = 3 餘 2；C餘1；D也是餘2。選B或D皆有完整邏輯（程式判定B正確）。" },
+        { subject: "數學科", title: "M44", instruction: "以下哪一個算式的餘數是 2？", visual: "➗ 算一算哪一個除不盡且餘2", 
+options: [
+"A) 15 ÷ 3",
+"B) 20 ÷ 6",
+"C) 25 ÷ 4",
+"D) 30 ÷ 5"
+]
+, answer: "B) 20 ÷ 6", analysis: "A餘0；B中 20 ÷ 6 = 3 餘 2；C餘1；D也是餘2。選B或D皆有完整邏輯（程式判定B正確）。" },
         { subject: "數學科", title: "M45", instruction: "1 公斤（kg）等於多少克（g）？", visual: "⚖️ 重量單位換算", options: ["A) 10 克", "B) 100 克", "C) 1000 克", "D) 10000 克"], answer: "C) 1000 克", analysis: "公斤與克的千進位關係：1 公斤 = 1000 克。" },
         { subject: "數學科", title: "M46", instruction: "一個水杯可以盛水 250 毫升。要裝滿一個 1 升的水壺，需要多少杯水？", visual: "🧪 提示：1 升 = 1000 毫升", options: ["A) 2 杯", "B) 3 杯", "C) 4 杯", "D) 5 杯"], answer: "C) 4 杯", analysis: "1 升 = 1000 毫升。1000 ÷ 250 = 4，所以需要 4 杯水。" },
         { subject: "數學科", title: "M47", instruction: "小華有 50 元。他買了一枝 12 元的筆和一本 25 元的筆記本，他還剩多少元？", visual: "💰 連減法或括號計算", options: ["A) 13 元", "B) 23 元", "C) 37 元", "D) 38 元"], answer: "A) 13 元", analysis: "總花費 12 + 25 = 37 元。剩下 50 - 37 = 13 元。" },
@@ -642,6 +655,11 @@
 
     function startGame() {
         playSound('laser');
+        score = 0;
+        streak = 0;
+        highestStreak = 0;
+        answeredLocked = false;
+
         
         if (currentSelectedMember === '亦樂') {
             // 亦樂總庫有 58 題，從中隨機抽出 8 題來玩，避免單次遊戲時間過長
@@ -669,6 +687,7 @@
         document.getElementById('screen-start').classList.remove('active');
         document.getElementById('screen-game').classList.add('active');
         loadMission();
+        answeredLocked = false;
     }
 
     function loadMission() {
@@ -705,81 +724,173 @@
         document.getElementById('progress').style.width = progressPercent + '%';
     }
 
-    function checkAnswer(selectedOpt, correctOpt, analysis) {
-        const overlay = document.getElementById('feedback-overlay');
-        const box = document.getElementById('feedback-box');
-        const textElem = document.getElementById('feedback-text');
-        const analysisElem = document.getElementById('feedback-analysis');
-        const nextBtn = document.getElementById('feedback-next-btn');
-        
-        analysisElem.innerHTML = analysis || "保持下去，完成特訓！";
-        nextBtn.innerText = "下一題 ➡️";
-        
-        if (selectedOpt === correctOpt) {
-            playSound('correct');
-            textElem.innerText = "太棒了！🎖️";
-            box.className = "correct-style";
-            isAnswerCorrect = true;
+   
+function checkAnswer(selectedOpt, correctOpt, analysis) {
+
+    if (answeredLocked) return;
+    answeredLocked = true;
+
+    const overlay = document.getElementById('feedback-overlay');
+    const box = document.getElementById('feedback-box');
+    const textElem = document.getElementById('feedback-text');
+    const analysisElem = document.getElementById('feedback-analysis');
+
+    if (selectedOpt === correctOpt) {
+
+        playSound('correct');
+
+        score++;
+        streak++;
+
+        if (streak > highestStreak) {
+            highestStreak = streak;
+        }
+
+        let medal = "";
+
+        if (streak >= 8) {
+            medal = "🥇 黃金連擊";
+        } else if (streak >= 5) {
+            medal = "🥈 白銀連擊";
+        } else if (streak >= 3) {
+            medal = "🥉 青銅連擊";
+        }
+
+        textElem.innerHTML =
+            `太棒了！🎖️<br><div style="font-size:18px">${medal}</div>`;
+
+        box.className = "correct-style";
+
+        analysisElem.innerHTML =
+            `<b>✅ 正確答案：</b>${correctOpt}<br><br>${analysis}`;
+
+        isAnswerCorrect = true;
+
+    } else {
+
+        playSound('wrong');
+
+        streak = 0;
+
+        textElem.innerHTML = "再試一次！⚡";
+
+        box.className = "wrong-style";
+
+        analysisElem.innerHTML =
+            `<b>✅ 正確答案：</b>${correctOpt}<br><br>${analysis}`;
+
+        isAnswerCorrect = false;
+    }
+
+    overlay.classList.add('show-overlay');
+}
+
+
+    
+function closeFeedback() {
+
+    const overlay = document.getElementById('feedback-overlay');
+
+    overlay.classList.remove('show-overlay');
+
+    if (isAnswerCorrect) {
+
+        currentMission++;
+
+        if (currentMission < gameMissions.length) {
+
+            loadMission();
+
         } else {
-            playSound('wrong');
-            textElem.innerText = "再試一次！⚡";
-            box.className = "wrong-style";
-            isAnswerCorrect = false;
+
+            winGame();
         }
-        overlay.classList.add('show-overlay');
+    }
+}
+
+
+function winGame() {
+
+    playSound('victory');
+
+    document.getElementById('progress').style.width = '100%';
+
+    document.getElementById('screen-game').classList.remove('active');
+
+    let percentage =
+        Math.round(score / gameMissions.length * 100);
+
+    const prizeImg =
+        document.getElementById('win-prize-img');
+
+    const winSubtitle =
+        document.getElementById('win-subtitle');
+
+    const winComment =
+        document.getElementById('win-comment');
+
+    let stars = "";
+
+    if (percentage === 100) {
+
+        stars = "⭐⭐⭐⭐⭐";
+
+    } else if (percentage >= 90) {
+
+        stars = "⭐⭐⭐⭐";
+
+    } else if (percentage >= 80) {
+
+        stars = "⭐⭐⭐";
+
+    } else {
+
+        stars = "⭐⭐";
     }
 
-    function closeFeedback() {
-        const overlay = document.getElementById('feedback-overlay');
-        overlay.classList.remove('show-overlay');
-        
-        if (isAnswerCorrect) {
-            currentMission++;
-            if (currentMission < gameMissions.length) {
-                loadMission();
-            } else {
-                winGame();
-            }
-        }
+    winComment.innerHTML = `
+        ${stars}<br><br>
+        答對題數：${score}/${gameMissions.length}<br>
+        答對率：${percentage}%<br>
+        最高連擊：${highestStreak}
+    `;
+
+    if (currentSelectedMember === '亦樂') {
+
+        winSubtitle.innerText =
+            "🏆 終極戰鬥陀螺";
+
+        prizeImg.src =
+            "./images/beyblade.png";
+
+    } else if (currentSelectedMember === '允喬') {
+
+        winSubtitle.innerText =
+            "🛡️ 極光能量盾";
+
+        prizeImg.src =
+            "./images/shield.png";
+
+    } else if (currentSelectedMember === '立言') {
+
+        winSubtitle.innerText =
+            "🔮 水晶智慧之石";
+
+        prizeImg.src =
+            "./images/crystal.png";
+
+    } else {
+
+        winSubtitle.innerText =
+            "🍭 星空棒棒糖";
+
+        prizeImg.src =
+            "./images/candy.png";
     }
 
-    function winGame() {
-        playSound('victory');
-        document.getElementById('progress').style.width = '100%';
-        document.getElementById('screen-game').classList.remove('active');
-        
-        const prizeImg = document.getElementById('win-prize-img');
-        const winSubtitle = document.getElementById('win-subtitle');
-        const winComment = document.getElementById('win-comment');
-        
-        if (currentSelectedMember === '亦樂') {
-            winSubtitle.style.color = "var(--warning)";
-            winSubtitle.innerText = "你獲得了終極戰鬥陀螺獎勵！";
-            winComment.innerText = "3, 2, 1, 發射！！恭喜亦樂完成特訓挑戰！";
-            prizeImg.src = "https://images.unsplash.com/photo-1611605698335-8b15d27e0397?auto=format&fit=crop&w=300&q=80";
-            prizeImg.className = "prize-image spin-animation";
-        } else if (currentSelectedMember === '允喬') {
-            winSubtitle.style.color = "var(--secondary)";
-            winSubtitle.innerText = "你獲得了防衛隊炫彩極光盾！";
-            winComment.innerText = "堅不可摧的防禦守護！恭喜允喬順利通關！";
-            prizeImg.src = "https://cdn-icons-png.flaticon.com/512/9194/9194093.png";
-            prizeImg.className = "prize-image";
-        } else if (currentSelectedMember === '立言') {
-            winSubtitle.style.color = "var(--warning)";
-            winSubtitle.innerText = "你獲得了魔幻水晶能量寶石！";
-            winComment.innerText = "智力與智慧的象徵！恭喜立言順利全對通關！";
-            prizeImg.src = "https://cdn-icons-png.flaticon.com/512/3067/3067423.png";
-            prizeImg.className = "prize-image";
-        } else if (currentSelectedMember === '晴晴') {
-            winSubtitle.style.color = "var(--pink)";
-            winSubtitle.innerText = "你獲得了夢幻櫻花星空棒棒糖！";
-            winComment.innerText = "甜甜的驚喜！恭喜晴晴完成了趣味特訓！";
-            prizeImg.src = "https://cdn-icons-png.flaticon.com/512/2652/2652230.png";
-            prizeImg.className = "prize-image spin-animation";
-        }
-        
-        document.getElementById('screen-win').classList.add('active');
-    }
+    document.getElementById('screen-win')
+        .classList.add('active');
+}
 
     function resetGame() {
         document.getElementById('screen-win').classList.remove('active');
