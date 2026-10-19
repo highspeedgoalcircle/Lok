@@ -203,16 +203,20 @@
 
         <div class="mt-4 no-print">
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-6 col-6">
                     <button class="btn btn-primary btn-lg w-100 py-3 fw-bold shadow-sm" onclick="exportExcel()">📊 匯出 Excel</button>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6 col-6">
                     <button id="pdfBtn" class="btn btn-danger btn-lg w-100 py-3 fw-bold shadow-sm" onclick="exportPDF('driverFormView', '動車組調車記錄')">📄 匯出 PDF</button>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6 col-6">
+                    <button class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm" onclick="shareExcelToTCI()">📤 發送 Excel 給 TCI</button>
+                </div>
+                <div class="col-md-6 col-6">
                     <button class="btn btn-outline-danger btn-lg w-100 py-3 fw-bold shadow-sm" onclick="clearEMUForm()">🗑️ 清除資料</button>
                 </div>
             </div>
+            <p class="text-muted small mt-2 mb-0 text-center">「發送 Excel 給 TCI」可在手機直接分享至 WhatsApp / 郵件等</p>
         </div>
     </div>
 
@@ -971,13 +975,7 @@ function getFormDataObject() {
     };
 }
 
-function exportExcel() {
-    const data = getFormDataObject();
-    if (!data.trainNo || !data.driverName) {
-        alert("❌ 匯出失敗：『車組號』與『司機姓名』為必填項目！");
-        return;
-    }
-    
+function buildEMUWorkbook(data) {
     const wb = XLSX.utils.book_new();
     const baseRows = [
         ["港鐵動車組調車作業記錄 - 基本資訊"], [],
@@ -1009,7 +1007,73 @@ function exportExcel() {
     logRows.push([], ["電子簽名狀態", data.signatureStatus]);
     
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(logRows), "運行與事件紀錄");
+    return wb;
+}
+
+function exportExcel() {
+    const data = getFormDataObject();
+    if (!data.trainNo || !data.driverName) {
+        alert("❌ 匯出失敗：『車組號』與『司機姓名』為必填項目！");
+        return;
+    }
+    const wb = buildEMUWorkbook(data);
     XLSX.writeFile(wb, `調車記錄_${data.trainNo}_${data.date}.xlsx`);
+}
+
+async function shareExcelToTCI() {
+    const data = getFormDataObject();
+    if (!data.trainNo || !data.driverName) {
+        alert("❌ 請先填寫『車組號』與『司機姓名』！");
+        return;
+    }
+
+    const wb = buildEMUWorkbook(data);
+    const fileName = `調車記錄_${data.trainNo}_${data.date || '未填日期'}.xlsx`;
+    // 產生二進位資料
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    const file = new File([blob], fileName, {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+
+    const shareText = `動車組調車作業記錄\n車號：${data.trainNo}\n司機：${data.driverName}\n日期：${data.date || '—'}\n請查收附件 Excel。`;
+
+    // 優先使用系統分享（手機可選 WhatsApp）
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({
+                title: `調車記錄 ${data.trainNo}`,
+                text: shareText,
+                files: [file]
+            });
+            return;
+        } catch (err) {
+            if (err && err.name === 'AbortError') return; // 使用者取消
+            console.warn('檔案分享失敗，改用文字分享或下載', err);
+        }
+    }
+
+    // 部分手機支援 share 但不支援 files
+    if (navigator.share) {
+        try {
+            // 先下載檔案，再分享文字提示
+            XLSX.writeFile(wb, fileName);
+            await navigator.share({
+                title: `調車記錄 ${data.trainNo}`,
+                text: shareText + '\n\n（Excel 已下載到手機，請在 WhatsApp 選擇該檔案傳送給 TCI）'
+            });
+            return;
+        } catch (err) {
+            if (err && err.name === 'AbortError') return;
+            console.warn('文字分享失敗', err);
+        }
+    }
+
+    // 桌面或不支援 Web Share：改為下載，並提示可用 WhatsApp Web
+    XLSX.writeFile(wb, fileName);
+    alert('✅ Excel 已下載。\n\n手機請使用「發送 Excel 給 TCI」按鈕，系統會開啟分享選單（可選 WhatsApp）。\n若在電腦，可手動把下載的檔案傳到 WhatsApp。');
 }
 
 // ====================== 機車相關功能 ======================
