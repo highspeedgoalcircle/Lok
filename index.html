@@ -1031,7 +1031,7 @@ function downloadBlobFile(blob, fileName) {
     setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-    }, 1500);
+    }, 2000);
 }
 
 async function shareExcelToTCI() {
@@ -1048,47 +1048,27 @@ async function shareExcelToTCI() {
     const blob = new Blob([wbout], { type: mime });
     const file = new File([blob], fileName, { type: mime, lastModified: Date.now() });
 
-    const shareText = `【動車組調車作業記錄】\n車號：${data.trainNo}\n司機：${data.driverName}\n日期：${data.date || '—'}\n請查收 Excel 附件。`;
-
-    // ① 先把檔案下載到手機（確保一定有檔可傳）
-    downloadBlobFile(blob, fileName);
-
-    // ② 嘗試系統分享「只傳檔案」（WhatsApp 對 files+text 較容易失敗）
-    let shared = false;
-    if (navigator.canShare) {
+    // 只做一次「純檔案」系統分享（不要同時傳 text，避免出現 blob 連結、重複訊息）
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-            if (navigator.canShare({ files: [file] })) {
-                await navigator.share({ files: [file], title: fileName });
-                shared = true;
-            }
+            await navigator.share({ files: [file] });
+            return; // 成功或使用者完成後結束，不再下載或開 WhatsApp
         } catch (err) {
             if (err && err.name === 'AbortError') return; // 使用者取消
-            console.warn('files-only share failed', err);
+            console.warn('系統檔案分享失敗，改為下載', err);
         }
     }
 
-    // ③ 再試 files + 簡短文字
-    if (!shared && navigator.canShare) {
-        try {
-            if (navigator.canShare({ files: [file], text: shareText })) {
-                await navigator.share({ files: [file], text: shareText, title: fileName });
-                shared = true;
-            }
-        } catch (err) {
-            if (err && err.name === 'AbortError') return;
-            console.warn('files+text share failed', err);
-        }
-    }
-
-    // ④ 系統分享失敗：開啟 WhatsApp，並提示手動附加剛下載的檔案
-    if (!shared) {
-        const waText = encodeURIComponent(shareText + '\n\n（請點 ➕ / 附件，選擇剛下載的 Excel 檔案傳送）');
-        // 稍等一下讓下載完成
-        setTimeout(() => {
-            window.location.href = `https://wa.me/?text=${waText}`;
-        }, 600);
-        alert('✅ Excel 已儲存到手機。\n\n即將開啟 WhatsApp：\n1. 選擇 TCI 聯絡人\n2. 點 ➕ 或 📎 附件\n3. 選擇剛下載的「' + fileName + '」傳送');
-    }
+    // 不支援或分享失敗：只下載一次，提示手動用 WhatsApp 傳送
+    downloadBlobFile(blob, fileName);
+    alert(
+        '✅ Excel 已儲存到手機。\n\n' +
+        '請用 WhatsApp 手動傳送：\n' +
+        '1. 開啟與 TCI 的對話\n' +
+        '2. 點 ➕ 或 📎 附件\n' +
+        '3. 選擇檔案「' + fileName + '」傳送\n\n' +
+        '（不會自動開 WhatsApp，避免重複或失敗訊息）'
+    );
 }
 
 // ====================== 機車相關功能 ======================
