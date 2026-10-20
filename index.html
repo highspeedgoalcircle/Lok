@@ -1020,6 +1020,20 @@ function exportExcel() {
     XLSX.writeFile(wb, `調車記錄_${data.trainNo}_${data.date}.xlsx`);
 }
 
+function downloadBlobFile(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 1500);
+}
+
 async function shareExcelToTCI() {
     const data = getFormDataObject();
     if (!data.trainNo || !data.driverName) {
@@ -1029,51 +1043,52 @@ async function shareExcelToTCI() {
 
     const wb = buildEMUWorkbook(data);
     const fileName = `調車記錄_${data.trainNo}_${data.date || '未填日期'}.xlsx`;
-    // 產生二進位資料
     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([wbout], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    });
-    const file = new File([blob], fileName, {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    });
+    const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const blob = new Blob([wbout], { type: mime });
+    const file = new File([blob], fileName, { type: mime, lastModified: Date.now() });
 
-    const shareText = `動車組調車作業記錄\n車號：${data.trainNo}\n司機：${data.driverName}\n日期：${data.date || '—'}\n請查收附件 Excel。`;
+    const shareText = `【動車組調車作業記錄】\n車號：${data.trainNo}\n司機：${data.driverName}\n日期：${data.date || '—'}\n請查收 Excel 附件。`;
 
-    // 優先使用系統分享（手機可選 WhatsApp）
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    // ① 先把檔案下載到手機（確保一定有檔可傳）
+    downloadBlobFile(blob, fileName);
+
+    // ② 嘗試系統分享「只傳檔案」（WhatsApp 對 files+text 較容易失敗）
+    let shared = false;
+    if (navigator.canShare) {
         try {
-            await navigator.share({
-                title: `調車記錄 ${data.trainNo}`,
-                text: shareText,
-                files: [file]
-            });
-            return;
+            if (navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: fileName });
+                shared = true;
+            }
         } catch (err) {
             if (err && err.name === 'AbortError') return; // 使用者取消
-            console.warn('檔案分享失敗，改用文字分享或下載', err);
+            console.warn('files-only share failed', err);
         }
     }
 
-    // 部分手機支援 share 但不支援 files
-    if (navigator.share) {
+    // ③ 再試 files + 簡短文字
+    if (!shared && navigator.canShare) {
         try {
-            // 先下載檔案，再分享文字提示
-            XLSX.writeFile(wb, fileName);
-            await navigator.share({
-                title: `調車記錄 ${data.trainNo}`,
-                text: shareText + '\n\n（Excel 已下載到手機，請在 WhatsApp 選擇該檔案傳送給 TCI）'
-            });
-            return;
+            if (navigator.canShare({ files: [file], text: shareText })) {
+                await navigator.share({ files: [file], text: shareText, title: fileName });
+                shared = true;
+            }
         } catch (err) {
             if (err && err.name === 'AbortError') return;
-            console.warn('文字分享失敗', err);
+            console.warn('files+text share failed', err);
         }
     }
 
-    // 桌面或不支援 Web Share：改為下載，並提示可用 WhatsApp Web
-    XLSX.writeFile(wb, fileName);
-    alert('✅ Excel 已下載。\n\n手機請使用「發送 Excel 給 TCI」按鈕，系統會開啟分享選單（可選 WhatsApp）。\n若在電腦，可手動把下載的檔案傳到 WhatsApp。');
+    // ④ 系統分享失敗：開啟 WhatsApp，並提示手動附加剛下載的檔案
+    if (!shared) {
+        const waText = encodeURIComponent(shareText + '\n\n（請點 ➕ / 附件，選擇剛下載的 Excel 檔案傳送）');
+        // 稍等一下讓下載完成
+        setTimeout(() => {
+            window.location.href = `https://wa.me/?text=${waText}`;
+        }, 600);
+        alert('✅ Excel 已儲存到手機。\n\n即將開啟 WhatsApp：\n1. 選擇 TCI 聯絡人\n2. 點 ➕ 或 📎 附件\n3. 選擇剛下載的「' + fileName + '」傳送');
+    }
 }
 
 // ====================== 機車相關功能 ======================
