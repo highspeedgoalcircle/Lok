@@ -220,10 +220,16 @@
                     <button class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm" onclick="shareExcelToTCI()">📤 發送 Excel 給 TCI</button>
                 </div>
                 <div class="col-md-6 col-6">
+                    <button id="sharePdfBtn" class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm" style="background:#0d9488;border-color:#0d9488;" onclick="sharePDFToTCI()">📤 發送 PDF 給 TCI</button>
+                </div>
+                <div class="col-12">
                     <button class="btn btn-outline-danger btn-lg w-100 py-3 fw-bold shadow-sm" onclick="clearEMUForm()">🗑️ 清除資料</button>
                 </div>
             </div>
-            <p class="text-muted small mt-2 mb-0 text-center">「發送 Excel 給 TCI」可在手機直接分享至 WhatsApp / 郵件等</p>
+            <p class="text-muted small mt-2 mb-0 text-center">
+                Android 建議用「發送 PDF 給 TCI」直傳 WhatsApp；Excel 多半需先下載再附加。<br>
+                iPhone 兩者通常都可直接分享。
+            </p>
         </div>
     </div>
 
@@ -1190,6 +1196,96 @@ async function shareExcelToTCI() {
     } catch (e) {
         console.error(e);
         alert('❌ 產生 Excel 失敗，請稍後再試。');
+    } finally {
+        restoreBtn();
+    }
+}
+
+/** 將表單截成 PDF File（隱藏 no-print 按鈕列） */
+async function buildEMUPDFFile(data) {
+    const element = document.getElementById('driverFormView');
+    const hidden = [];
+    element.querySelectorAll('.no-print').forEach(el => {
+        hidden.push([el, el.style.display]);
+        el.style.display = 'none';
+    });
+    try {
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+        });
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
+            heightLeft -= pdfHeight;
+        }
+        const blob = pdf.output('blob');
+        const safeTrain = (data.trainNo || 'EMU').replace(/[^\w\-]/g, '');
+        const safeDate = (data.date || 'nodate').replace(/[^\d\-]/g, '');
+        const fileName = `EMU_Shunting_${safeTrain}_${safeDate}.pdf`;
+        return new File([blob], fileName, { type: 'application/pdf', lastModified: Date.now() });
+    } finally {
+        hidden.forEach(([el, disp]) => { el.style.display = disp; });
+    }
+}
+
+let _sharePdfInProgress = false;
+
+async function sharePDFToTCI() {
+    if (_sharePdfInProgress) return;
+
+    const data = getFormDataObject();
+    if (!data.trainNo || !data.driverName) {
+        alert("❌ 請先填寫『車組號』與『司機姓名』！");
+        return;
+    }
+
+    const btn = document.getElementById('sharePdfBtn');
+    const restoreBtn = () => {
+        _sharePdfInProgress = false;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '📤 發送 PDF 給 TCI';
+        }
+    };
+    _sharePdfInProgress = true;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ 產生 PDF 中...';
+    }
+
+    try {
+        const pdfFile = await buildEMUPDFFile(data);
+
+        // PDF 在 Android 上比 Excel 容易直接分享到 WhatsApp
+        const result = await tryShareFile(pdfFile);
+        if (result === true) return;
+        if (result === null) return;
+
+        downloadFallback(pdfFile);
+        alert(
+            '✅ PDF 已下載：' + pdfFile.name + '\n\n' +
+            '請用 WhatsApp 手動傳送：\n' +
+            '1. 開啟與 TCI 的對話\n' +
+            '2. 點 ➕ 或 📎\n' +
+            '3. 選擇「' + pdfFile.name + '」傳送'
+        );
+    } catch (e) {
+        console.error(e);
+        alert('❌ 產生 PDF 失敗，請稍後再試。');
     } finally {
         restoreBtn();
     }
