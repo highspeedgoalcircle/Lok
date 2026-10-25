@@ -57,6 +57,13 @@
         padding-top: 20px;
         border-top: 3px solid #0d6efd;
     }
+    /* 24 小時制時間輸入 */
+    .time-24 {
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.5px;
+    }
+    .time-24::placeholder { color: #adb5bd; }
     
     @media print {
         .no-print { display: none !important; }
@@ -157,8 +164,8 @@
             <div class="col-md-4"><label class="form-label">GSM-R 編號</label><input type="text" id="gsmr" class="form-control mobile-input" placeholder="由車組號自動帶出"></div>
             <div class="col-md-4"><label class="form-label">對講機編號</label><input type="text" id="radio" class="form-control mobile-input"></div>
             <div class="col-md-4"><label class="form-label">錄音筆編號</label><input type="text" id="recorder" class="form-control mobile-input"></div>
-            <div class="col-md-6"><label class="form-label">列車整備開始時間</label><input type="time" id="startTime" class="form-control mobile-input"></div>
-            <div class="col-md-6"><label class="form-label">列車整備完成時間</label><input type="time" id="endTime" class="form-control mobile-input"></div>
+            <div class="col-md-6"><label class="form-label">列車整備開始時間 (24小時制)</label><input type="text" id="startTime" class="form-control mobile-input time-24" placeholder="HH:mm 例如 14:30" maxlength="5" inputmode="numeric" autocomplete="off"></div>
+            <div class="col-md-6"><label class="form-label">列車整備完成時間 (24小時制)</label><input type="text" id="endTime" class="form-control mobile-input time-24" placeholder="HH:mm 例如 15:00" maxlength="5" inputmode="numeric" autocomplete="off"></div>
         </div>
 
         <div class="section-title d-flex justify-content-between align-items-center">
@@ -770,7 +777,7 @@ function loadEMUFormFromLocal() {
             p.events.forEach(e => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><input type="time" class="form-control" value="${e.time || ''}"></td>
+                    <td>${timeInputHTML(e.time || '')}</td>
                     <td><input type="text" class="form-control" value="${e.location || ''}"></td>
                     <td><input type="text" class="form-control" value="${e.detail || ''}"></td>
                     <td class="no-print"><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); scheduleFormSave(saveEMUFormToLocal)">刪除</button></td>
@@ -896,6 +903,63 @@ function rebuildRunningTable() {
     });
 }
 
+function timeInputHTML(value = '') {
+    const v = normalizeTime24(value || '');
+    return `<input type="text" class="form-control time-24" value="${v}" placeholder="HH:mm" maxlength="5" inputmode="numeric" autocomplete="off" title="24小時制，例如 14:30">`;
+}
+
+/** 將各種時間字串正規化為 24 小時制 HH:mm；無效則回傳空字串 */
+function normalizeTime24(raw) {
+    if (!raw) return '';
+    let s = String(raw).trim().toUpperCase();
+    // 處理 2:30 PM / 02:30PM / 14:30 等
+    let isPM = /\bPM\b/.test(s);
+    let isAM = /\bAM\b/.test(s);
+    s = s.replace(/\s*(AM|PM)\s*/g, '').replace(/[^0-9:]/g, '');
+    let h = 0, m = 0;
+    if (s.includes(':')) {
+        const parts = s.split(':');
+        h = parseInt(parts[0], 10) || 0;
+        m = parseInt(parts[1], 10) || 0;
+    } else if (s.length === 3 || s.length === 4) {
+        // 930 -> 09:30, 1430 -> 14:30
+        const padded = s.padStart(4, '0');
+        h = parseInt(padded.slice(0, 2), 10);
+        m = parseInt(padded.slice(2), 10);
+    } else if (s.length === 1 || s.length === 2) {
+        h = parseInt(s, 10) || 0;
+        m = 0;
+    } else {
+        return '';
+    }
+    if (isPM && h < 12) h += 12;
+    if (isAM && h === 12) h = 0;
+    if (h < 0 || h > 23 || m < 0 || m > 59 || isNaN(h) || isNaN(m)) return '';
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/** 輸入時自動插入冒號：1430 → 14:30 */
+function onTime24Input(e) {
+    const el = e.target;
+    if (!el.classList.contains('time-24')) return;
+    let digits = el.value.replace(/[^0-9]/g, '').slice(0, 4);
+    if (digits.length >= 3) {
+        el.value = digits.slice(0, 2) + ':' + digits.slice(2);
+    } else {
+        el.value = digits;
+    }
+}
+
+function onTime24Blur(e) {
+    const el = e.target;
+    if (!el.classList.contains('time-24')) return;
+    const norm = normalizeTime24(el.value);
+    el.value = norm;
+    if (el.value && !/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(el.value)) {
+        el.value = '';
+    }
+}
+
 function addRunningRow(loc, hideArr, hideDep, savedTime = {}, isManual = false) {
     const tbody = document.querySelector("#runningTable tbody");
     const tr = document.createElement('tr');
@@ -904,8 +968,8 @@ function addRunningRow(loc, hideArr, hideDep, savedTime = {}, isManual = false) 
         : `<input type="text" class="form-control bg-light" value="${loc}" readonly>`;
     tr.innerHTML = `
         <td>${locationInput}</td>
-        <td>${hideArr ? '<span class="text-muted">—</span>' : `<input type="time" class="form-control" value="${savedTime.arrival || savedTime.arr || ''}">`}</td>
-        <td>${hideDep ? '<span class="text-muted">—</span>' : `<input type="time" class="form-control" value="${savedTime.departure || savedTime.dep || ''}">`}</td>
+        <td>${hideArr ? '<span class="text-muted">—</span>' : timeInputHTML(savedTime.arrival || savedTime.arr || '')}</td>
+        <td>${hideDep ? '<span class="text-muted">—</span>' : timeInputHTML(savedTime.departure || savedTime.dep || '')}</td>
         <td class="no-print"><button class="btn btn-outline-danger btn-sm" onclick="this.closest('tr').remove()">✕</button></td>
     `;
     tbody.appendChild(tr);
@@ -918,14 +982,14 @@ function addEventRow(tableId) {
     const tr = document.createElement('tr');
     if (tableId === 'eventTable') {
         tr.innerHTML = `
-            <td><input type="time" class="form-control"></td>
+            <td>${timeInputHTML()}</td>
             <td><input type="text" class="form-control"></td>
             <td><input type="text" class="form-control"></td>
             <td class="no-print"><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">刪除</button></td>
         `;
     } else {
         tr.innerHTML = `
-            <td><input type="time" class="form-control"></td>
+            <td>${timeInputHTML()}</td>
             <td><input type="text" class="form-control"></td>
             <td class="no-print"><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">刪除</button></td>
         `;
@@ -1020,11 +1084,11 @@ function exportExcel() {
     XLSX.writeFile(wb, `調車記錄_${data.trainNo}_${data.date}.xlsx`);
 }
 
-function downloadBlobFile(blob, fileName) {
-    const url = URL.createObjectURL(blob);
+function downloadFallback(file) {
+    const url = URL.createObjectURL(file);
     const a = document.createElement('a');
     a.href = url;
-    a.download = fileName;
+    a.download = file.name;
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
@@ -1034,41 +1098,84 @@ function downloadBlobFile(blob, fileName) {
     }, 2000);
 }
 
+let _shareInProgress = false;
+
 async function shareExcelToTCI() {
+    if (_shareInProgress) return; // 防止連按產生多則訊息
+
     const data = getFormDataObject();
     if (!data.trainNo || !data.driverName) {
         alert("❌ 請先填寫『車組號』與『司機姓名』！");
         return;
     }
 
-    const wb = buildEMUWorkbook(data);
-    const fileName = `調車記錄_${data.trainNo}_${data.date || '未填日期'}.xlsx`;
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    const blob = new Blob([wbout], { type: mime });
-    const file = new File([blob], fileName, { type: mime, lastModified: Date.now() });
-
-    // 只做一次「純檔案」系統分享（不要同時傳 text，避免出現 blob 連結、重複訊息）
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-            await navigator.share({ files: [file] });
-            return; // 成功或使用者完成後結束，不再下載或開 WhatsApp
-        } catch (err) {
-            if (err && err.name === 'AbortError') return; // 使用者取消
-            console.warn('系統檔案分享失敗，改為下載', err);
+    const btn = document.querySelector('button[onclick="shareExcelToTCI()"]');
+    const restoreBtn = () => {
+        _shareInProgress = false;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '📤 發送 Excel 給 TCI';
         }
+    };
+    _shareInProgress = true;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ 準備分享中...';
     }
 
-    // 不支援或分享失敗：只下載一次，提示手動用 WhatsApp 傳送
-    downloadBlobFile(blob, fileName);
-    alert(
-        '✅ Excel 已儲存到手機。\n\n' +
-        '請用 WhatsApp 手動傳送：\n' +
-        '1. 開啟與 TCI 的對話\n' +
-        '2. 點 ➕ 或 📎 附件\n' +
-        '3. 選擇檔案「' + fileName + '」傳送\n\n' +
-        '（不會自動開 WhatsApp，避免重複或失敗訊息）'
-    );
+    try {
+        const wb = buildEMUWorkbook(data);
+        // 檔名：保留中文；部分舊機可讀性靠副檔名 .xlsx
+        const fileName = `調車記錄_${data.trainNo}_${data.date || '未填日期'}.xlsx`;
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        const excelBlob = new Blob([wbout], { type: mime });
+        const excelFile = new File([excelBlob], fileName, {
+            type: mime,
+            lastModified: Date.now()
+        });
+
+        // Android / iOS：優先只分享檔案（不帶 text，減少 WhatsApp 失敗）
+        const filesOnly = { files: [excelFile] };
+        if (navigator.canShare && navigator.canShare(filesOnly)) {
+            try {
+                await navigator.share(filesOnly);
+                // 分享面板關閉且成功 → 結束（不下載、不開第二個分享）
+                return;
+            } catch (error) {
+                // 使用者取消：不下載
+                if (error && error.name === 'AbortError') return;
+                console.warn('files-only share 失敗，嘗試含 title', error);
+            }
+
+            // 少數裝置需要 title 才會顯示 App 列表
+            try {
+                await navigator.share({
+                    files: [excelFile],
+                    title: '調車作業記錄'
+                });
+                return;
+            } catch (error) {
+                if (error && error.name === 'AbortError') return;
+                console.warn('files+title share 失敗，改用下載', error);
+            }
+        }
+
+        // 不支援檔案分享，或兩次 share 都失敗 → 下載備用
+        downloadFallback(excelFile);
+        alert(
+            '✅ Excel 已儲存到手機。\n\n' +
+            '此裝置未能直接分享檔案，請手動用 WhatsApp 傳送：\n' +
+            '1. 開啟與 TCI 的對話\n' +
+            '2. 點 ➕ 或 📎 附件\n' +
+            '3. 選擇「' + fileName + '」傳送'
+        );
+    } catch (e) {
+        console.error(e);
+        alert('❌ 產生 Excel 失敗，請稍後再試。');
+    } finally {
+        restoreBtn();
+    }
 }
 
 // ====================== 機車相關功能 ======================
@@ -1100,8 +1207,8 @@ function addLocoMovementRow(data = {}) {
         <td><input type="text" class="form-control" value="${data.to || ''}" placeholder="至"></td>
         <td><input type="text" class="form-control" value="${data.operator1 || ''}" placeholder="司機1"></td>
         <td><input type="text" class="form-control" value="${data.operator2 || ''}" placeholder="司機2"></td>
-        <td><input type="time" class="form-control" value="${data.timeDepart || ''}"></td>
-        <td><input type="time" class="form-control" value="${data.timeArrival || ''}"></td>
+        <td>${timeInputHTML(data.timeDepart || '')}</td>
+        <td>${timeInputHTML(data.timeArrival || '')}</td>
         <td><input type="text" class="form-control" value="${data.remarks || ''}" placeholder="Remarks"></td>
         <td class="no-print text-center"><button class="btn btn-outline-danger btn-sm p-1 py-0" onclick="this.closest('tr').remove()">✕</button></td>
     `;
@@ -1178,7 +1285,7 @@ function loadLocoFormFromLocal() {
             p.events.forEach(e => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><input type="time" class="form-control" value="${e.time || ''}"></td>
+                    <td>${timeInputHTML(e.time || '')}</td>
                     <td><input type="text" class="form-control" value="${e.particulars || ''}"></td>
                     <td class="no-print"><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove(); scheduleFormSave(saveLocoFormToLocal)">刪除</button></td>
                 `;
@@ -1855,6 +1962,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 簽名結束後也儲存
     document.getElementById('signatureBox').addEventListener('mouseup', () => scheduleFormSave(saveEMUFormToLocal));
     document.getElementById('signatureBox').addEventListener('touchend', () => scheduleFormSave(saveEMUFormToLocal));
+
+    // 24 小時制時間輸入：自動格式化
+    document.addEventListener('input', onTime24Input);
+    document.addEventListener('blur', onTime24Blur, true);
 });
 </script>
 </body>
