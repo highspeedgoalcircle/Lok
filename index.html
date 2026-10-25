@@ -1100,20 +1100,37 @@ function downloadFallback(file) {
 
 let _shareInProgress = false;
 
+function isAndroid() {
+    return /Android/i.test(navigator.userAgent || '');
+}
+
 /**
- * 產生 Excel File（Uint8Array 提高 Android Blob 相容性）
- * 分享用英文檔名，較少被 WhatsApp / 舊 Android 拒收
+ * 產生兩種 File：xlsx MIME（iOS 較穩）與 octet-stream（部分 Android 較易進分享選單）
  */
-function buildEMUExcelFile(data) {
+function buildEMUExcelFiles(data) {
     const wb = buildEMUWorkbook(data);
     const safeTrain = (data.trainNo || 'EMU').replace(/[^\w\-]/g, '');
     const safeDate = (data.date || 'nodate').replace(/[^\d\-]/g, '');
     const fileName = `EMU_Shunting_${safeTrain}_${safeDate}.xlsx`;
     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const u8 = wbout instanceof Uint8Array ? wbout : new Uint8Array(wbout);
-    const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    const excelBlob = new Blob([u8], { type: mime });
-    return new File([excelBlob], fileName, { type: mime, lastModified: Date.now() });
+    const xlsxMime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const fileXlsx = new File([u8], fileName, { type: xlsxMime, lastModified: Date.now() });
+    const fileBinary = new File([u8], fileName, { type: 'application/octet-stream', lastModified: Date.now() });
+    return { fileName, fileXlsx, fileBinary };
+}
+
+/** 成功 true、使用者取消 null、失敗 false */
+async function tryShareFile(file) {
+    if (typeof navigator.share !== 'function') return false;
+    try {
+        await navigator.share({ files: [file] });
+        return true;
+    } catch (error) {
+        if (error && error.name === 'AbortError') return null;
+        console.warn('share failed', file.type, error && error.message);
+        return false;
+    }
 }
 
 async function shareExcelToTCI() {
@@ -1140,31 +1157,36 @@ async function shareExcelToTCI() {
     }
 
     try {
-        const excelFile = buildEMUExcelFile(data);
-        const shareData = { files: [excelFile] };
+        const { fileName, fileXlsx, fileBinary } = buildEMUExcelFiles(data);
+        const android = isAndroid();
 
-        // ① 支援檔案分享 → 只 share 一次，只傳 files（不帶 text，避免 blob 連結 / 重複訊息）
-        if (typeof navigator.share === 'function' &&
-            typeof navigator.canShare === 'function' &&
-            navigator.canShare(shareData)) {
-            try {
-                await navigator.share(shareData);
-                return; // 成功或使用者完成分享後結束
-            } catch (error) {
-                if (error && error.name === 'AbortError') return; // 取消 → 什麼都不做
-                console.warn('Web Share 失敗，改用下載備用', error);
-            }
+        // Android：先 octet-stream；iOS：先正確 xlsx MIME
+        // 不依賴 canShare（Android 常對 xlsx 回 false 但仍可能 share）
+        const order = android ? [fileBinary, fileXlsx] : [fileXlsx, fileBinary];
+        for (const file of order) {
+            const result = await tryShareFile(file);
+            if (result === true) return;
+            if (result === null) return; // 使用者取消
         }
 
-        // ② 不支援或分享失敗 → 下載一次，提示手動用 WhatsApp 附加
-        downloadFallback(excelFile);
-        alert(
-            '✅ Excel 已儲存：' + excelFile.name + '\n\n' +
-            '請用 WhatsApp 手動傳送：\n' +
-            '1. 開啟與 TCI 的對話\n' +
-            '2. 點 ➕ 或 📎\n' +
-            '3. 選擇剛下載的 Excel 傳送'
-        );
+        // 無法直接分享 → 下載 + 清楚說明（Android 常見限制）
+        downloadFallback(fileXlsx);
+        if (android) {
+            alert(
+                '✅ Excel 已下載：' + fileName + '\n\n' +
+                '【Android 說明】\n' +
+                'Android Chrome / 系統瀏覽器通常不允許網頁直接把 Excel 傳入 WhatsApp（iPhone 可以）。\n\n' +
+                '請手動傳送給 TCI：\n' +
+                '1. 打開 WhatsApp → 選擇 TCI\n' +
+                '2. 點 ➕ 或 📎\n' +
+                '3. 檔案 / Downloads → 選「' + fileName + '」傳送'
+            );
+        } else {
+            alert(
+                '✅ Excel 已儲存：' + fileName + '\n\n' +
+                '請用 WhatsApp 手動附加該檔案傳送給 TCI。'
+            );
+        }
     } catch (e) {
         console.error(e);
         alert('❌ 產生 Excel 失敗，請稍後再試。');
