@@ -1093,15 +1093,31 @@ function downloadFallback(file) {
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
-        document.body.removeChild(a);
+        try { document.body.removeChild(a); } catch (_) {}
         URL.revokeObjectURL(url);
-    }, 2000);
+    }, 2500);
 }
 
 let _shareInProgress = false;
 
+/**
+ * 產生 Excel File（Uint8Array 提高 Android Blob 相容性）
+ * 分享用英文檔名，較少被 WhatsApp / 舊 Android 拒收
+ */
+function buildEMUExcelFile(data) {
+    const wb = buildEMUWorkbook(data);
+    const safeTrain = (data.trainNo || 'EMU').replace(/[^\w\-]/g, '');
+    const safeDate = (data.date || 'nodate').replace(/[^\d\-]/g, '');
+    const fileName = `EMU_Shunting_${safeTrain}_${safeDate}.xlsx`;
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const u8 = wbout instanceof Uint8Array ? wbout : new Uint8Array(wbout);
+    const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const excelBlob = new Blob([u8], { type: mime });
+    return new File([excelBlob], fileName, { type: mime, lastModified: Date.now() });
+}
+
 async function shareExcelToTCI() {
-    if (_shareInProgress) return; // 防止連按產生多則訊息
+    if (_shareInProgress) return;
 
     const data = getFormDataObject();
     if (!data.trainNo || !data.driverName) {
@@ -1124,51 +1140,30 @@ async function shareExcelToTCI() {
     }
 
     try {
-        const wb = buildEMUWorkbook(data);
-        // 檔名：保留中文；部分舊機可讀性靠副檔名 .xlsx
-        const fileName = `調車記錄_${data.trainNo}_${data.date || '未填日期'}.xlsx`;
-        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-        const excelBlob = new Blob([wbout], { type: mime });
-        const excelFile = new File([excelBlob], fileName, {
-            type: mime,
-            lastModified: Date.now()
-        });
+        const excelFile = buildEMUExcelFile(data);
+        const shareData = { files: [excelFile] };
 
-        // Android / iOS：優先只分享檔案（不帶 text，減少 WhatsApp 失敗）
-        const filesOnly = { files: [excelFile] };
-        if (navigator.canShare && navigator.canShare(filesOnly)) {
+        // ① 支援檔案分享 → 只 share 一次，只傳 files（不帶 text，避免 blob 連結 / 重複訊息）
+        if (typeof navigator.share === 'function' &&
+            typeof navigator.canShare === 'function' &&
+            navigator.canShare(shareData)) {
             try {
-                await navigator.share(filesOnly);
-                // 分享面板關閉且成功 → 結束（不下載、不開第二個分享）
-                return;
+                await navigator.share(shareData);
+                return; // 成功或使用者完成分享後結束
             } catch (error) {
-                // 使用者取消：不下載
-                if (error && error.name === 'AbortError') return;
-                console.warn('files-only share 失敗，嘗試含 title', error);
-            }
-
-            // 少數裝置需要 title 才會顯示 App 列表
-            try {
-                await navigator.share({
-                    files: [excelFile],
-                    title: '調車作業記錄'
-                });
-                return;
-            } catch (error) {
-                if (error && error.name === 'AbortError') return;
-                console.warn('files+title share 失敗，改用下載', error);
+                if (error && error.name === 'AbortError') return; // 取消 → 什麼都不做
+                console.warn('Web Share 失敗，改用下載備用', error);
             }
         }
 
-        // 不支援檔案分享，或兩次 share 都失敗 → 下載備用
+        // ② 不支援或分享失敗 → 下載一次，提示手動用 WhatsApp 附加
         downloadFallback(excelFile);
         alert(
-            '✅ Excel 已儲存到手機。\n\n' +
-            '此裝置未能直接分享檔案，請手動用 WhatsApp 傳送：\n' +
+            '✅ Excel 已儲存：' + excelFile.name + '\n\n' +
+            '請用 WhatsApp 手動傳送：\n' +
             '1. 開啟與 TCI 的對話\n' +
-            '2. 點 ➕ 或 📎 附件\n' +
-            '3. 選擇「' + fileName + '」傳送'
+            '2. 點 ➕ 或 📎\n' +
+            '3. 選擇剛下載的 Excel 傳送'
         );
     } catch (e) {
         console.error(e);
