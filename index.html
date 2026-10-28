@@ -109,11 +109,25 @@
         
         <div class="section-title">基本資料</div>
         <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label class="form-label">日期</label>
                 <input type="date" id="date" class="form-control mobile-input">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+                <label class="form-label">當值 TCI</label>
+                <select id="emuTCI" class="form-select mobile-input" onchange="toggleTCIOther(this, 'emuTCIOther')">
+                    <option value="">請選擇</option>
+                    <option value="陳海斌">陳海斌</option>
+                    <option value="黃俊豐">黃俊豐</option>
+                    <option value="崔見霆">崔見霆</option>
+                    <option value="黃卓賢">黃卓賢</option>
+                    <option value="龐永健">龐永健</option>
+                    <option value="林志偉">林志偉</option>
+                    <option value="__other__">其他（自行輸入）</option>
+                </select>
+                <input type="text" id="emuTCIOther" class="form-control mobile-input mt-2" placeholder="請輸入代班 TCI 姓名" style="display:none;">
+            </div>
+            <div class="col-md-4">
                 <label class="form-label">車組號</label>
                 <div class="input-group">
                     <span class="input-group-text mobile-input">CRH-025</span>
@@ -242,13 +256,13 @@
         
         <div class="section-title">基本資料 (Basic Details)</div>
         <div class="row g-3 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label">日期 Date</label>
                 <input type="date" id="locoDate" class="form-control mobile-input">
             </div>
-            <div class="col-md-4">
-                <label class="form-label">當值 TCI</label>
-                <select id="locoTCI" class="form-select mobile-input" onchange="toggleTCIOther(this)">
+            <div class="col-md-3">
+                <label class="form-label">S1 當值 TCI <span class="text-muted small">(早更)</span></label>
+                <select id="locoTCIS1" class="form-select mobile-input" onchange="toggleTCIOther(this, 'locoTCIS1Other')">
                     <option value="">請選擇</option>
                     <option value="陳海斌">陳海斌</option>
                     <option value="黃俊豐">黃俊豐</option>
@@ -258,7 +272,35 @@
                     <option value="林志偉">林志偉</option>
                     <option value="__other__">其他（自行輸入）</option>
                 </select>
-                <input type="text" id="locoTCIOther" class="form-control mobile-input mt-2" placeholder="請輸入代班 TCI 姓名" style="display:none;">
+                <input type="text" id="locoTCIS1Other" class="form-control mobile-input mt-2" placeholder="代班 TCI 姓名" style="display:none;">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">S2 當值 TCI <span class="text-muted small">(中更)</span></label>
+                <select id="locoTCIS2" class="form-select mobile-input" onchange="toggleTCIOther(this, 'locoTCIS2Other')">
+                    <option value="">請選擇</option>
+                    <option value="陳海斌">陳海斌</option>
+                    <option value="黃俊豐">黃俊豐</option>
+                    <option value="崔見霆">崔見霆</option>
+                    <option value="黃卓賢">黃卓賢</option>
+                    <option value="龐永健">龐永健</option>
+                    <option value="林志偉">林志偉</option>
+                    <option value="__other__">其他（自行輸入）</option>
+                </select>
+                <input type="text" id="locoTCIS2Other" class="form-control mobile-input mt-2" placeholder="代班 TCI 姓名" style="display:none;">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">S3 當值 TCI <span class="text-muted small">(夜更)</span></label>
+                <select id="locoTCIS3" class="form-select mobile-input" onchange="toggleTCIOther(this, 'locoTCIS3Other')">
+                    <option value="">請選擇</option>
+                    <option value="陳海斌">陳海斌</option>
+                    <option value="黃俊豐">黃俊豐</option>
+                    <option value="崔見霆">崔見霆</option>
+                    <option value="黃卓賢">黃卓賢</option>
+                    <option value="龐永健">龐永健</option>
+                    <option value="林志偉">林志偉</option>
+                    <option value="__other__">其他（自行輸入）</option>
+                </select>
+                <input type="text" id="locoTCIS3Other" class="form-control mobile-input mt-2" placeholder="代班 TCI 姓名" style="display:none;">
             </div>
         </div>
         
@@ -705,6 +747,8 @@ function saveEMUFormToLocal() {
 
         const payload = {
             date: document.getElementById('date').value,
+            tci: document.getElementById('emuTCI').value,
+            tciOther: document.getElementById('emuTCIOther').value,
             trainNoDigit: document.getElementById('trainNoDigit').value,
             driverNoDigit: document.getElementById('driverNoDigit').value,
             driverName: document.getElementById('driverNameInput').value,
@@ -734,6 +778,14 @@ function loadEMUFormFromLocal() {
         const p = JSON.parse(raw);
 
         if (p.date) document.getElementById('date').value = p.date;
+        document.getElementById('emuTCI').value = p.tci || '';
+        if (p.tci === '__other__') {
+            document.getElementById('emuTCIOther').style.display = 'block';
+            document.getElementById('emuTCIOther').value = p.tciOther || '';
+        } else {
+            document.getElementById('emuTCIOther').style.display = 'none';
+            document.getElementById('emuTCIOther').value = '';
+        }
         document.getElementById('trainNoDigit').value = p.trainNoDigit || '';
         document.getElementById('driverNoDigit').value = p.driverNoDigit || '';
         if (p.driverNoDigit) handleDriverNoInput(p.driverNoDigit);
@@ -820,6 +872,9 @@ function clearEMUForm() {
     if (!confirm("確定要清除「動車組調車作業記錄」全部填寫內容嗎？\n此操作無法復原（本機儲存也會清除）。")) return;
 
     document.getElementById('date').valueAsDate = new Date();
+    document.getElementById('emuTCI').value = '';
+    document.getElementById('emuTCIOther').value = '';
+    document.getElementById('emuTCIOther').style.display = 'none';
     document.getElementById('trainNoDigit').value = '';
     document.getElementById('driverNoDigit').value = '';
     document.getElementById('driverNameInput').value = '';
@@ -1030,6 +1085,7 @@ function getFormDataObject() {
     
     return {
         date: document.getElementById('date').value,
+        tci: getTCIValueFrom('emuTCI', 'emuTCIOther'),
         trainNo: document.getElementById('trainNoDigit').value ? `CRH-025${document.getElementById('trainNoDigit').value}` : '',
         driverName: document.getElementById('driverNameInput').value.trim(),
         driverNo: document.getElementById('driverNoDigit').value ? `49999${document.getElementById('driverNoDigit').value}` : '',
@@ -1052,6 +1108,7 @@ function buildEMUWorkbook(data) {
         ["項目", "填報內容"],
         ["表單類型", "EMU"],
         ["填報日期", data.date],
+        ["當值 TCI", data.tci || ""],
         ["動車組車號", data.trainNo],
         ["司機姓名", data.driverName],
         ["高鐵司機號", data.driverNo],
@@ -1292,8 +1349,9 @@ async function sharePDFToTCI() {
 }
 
 // ====================== 機車相關功能 ======================
-function toggleTCIOther(selectEl) {
-    const otherInput = document.getElementById('locoTCIOther');
+function toggleTCIOther(selectEl, otherInputId) {
+    const otherInput = document.getElementById(otherInputId);
+    if (!otherInput) return;
     if (selectEl.value === '__other__') {
         otherInput.style.display = 'block';
         otherInput.focus();
@@ -1303,12 +1361,20 @@ function toggleTCIOther(selectEl) {
     }
 }
 
-function getTCIValue() {
-    const selectVal = document.getElementById('locoTCI').value;
+function getTCIValueFrom(selectId, otherId) {
+    const selectVal = document.getElementById(selectId)?.value || '';
     if (selectVal === '__other__') {
-        return document.getElementById('locoTCIOther').value.trim() || '其他（未填姓名）';
+        return (document.getElementById(otherId)?.value || '').trim() || '其他（未填姓名）';
     }
-    return selectVal || '';
+    return selectVal;
+}
+
+function getLocoTCIValues() {
+    return {
+        s1: getTCIValueFrom('locoTCIS1', 'locoTCIS1Other'),
+        s2: getTCIValueFrom('locoTCIS2', 'locoTCIS2Other'),
+        s3: getTCIValueFrom('locoTCIS3', 'locoTCIS3Other')
+    };
 }
 
 function addLocoMovementRow(data = {}) {
@@ -1361,14 +1427,33 @@ function saveLocoFormToLocal() {
         });
         const payload = {
             date: document.getElementById('locoDate').value,
-            tci: document.getElementById('locoTCI').value,
-            tciOther: document.getElementById('locoTCIOther').value,
+            tciS1: document.getElementById('locoTCIS1').value,
+            tciS1Other: document.getElementById('locoTCIS1Other').value,
+            tciS2: document.getElementById('locoTCIS2').value,
+            tciS2Other: document.getElementById('locoTCIS2Other').value,
+            tciS3: document.getElementById('locoTCIS3').value,
+            tciS3Other: document.getElementById('locoTCIS3Other').value,
             movements,
             events
         };
         localStorage.setItem(LOCO_FORM_KEY, JSON.stringify(payload));
     } catch (e) {
         console.warn("LOCO form localStorage 寫入失敗", e);
+    }
+}
+
+function applyLocoTCIField(selectId, otherId, selectVal, otherVal) {
+    const sel = document.getElementById(selectId);
+    const other = document.getElementById(otherId);
+    if (!sel || !other) return;
+    // 兼容舊版單一 TCI 儲存
+    sel.value = selectVal || '';
+    if (selectVal === '__other__') {
+        other.style.display = 'block';
+        other.value = otherVal || '';
+    } else {
+        other.style.display = 'none';
+        other.value = '';
     }
 }
 
@@ -1379,10 +1464,14 @@ function loadLocoFormFromLocal() {
         const p = JSON.parse(raw);
 
         if (p.date) document.getElementById('locoDate').value = p.date;
-        document.getElementById('locoTCI').value = p.tci || '';
-        if (p.tci === '__other__') {
-            document.getElementById('locoTCIOther').style.display = 'block';
-            document.getElementById('locoTCIOther').value = p.tciOther || '';
+
+        // 新版三更；若只有舊版 tci 則填入 S1
+        if (p.tciS1 !== undefined || p.tciS2 !== undefined || p.tciS3 !== undefined) {
+            applyLocoTCIField('locoTCIS1', 'locoTCIS1Other', p.tciS1, p.tciS1Other);
+            applyLocoTCIField('locoTCIS2', 'locoTCIS2Other', p.tciS2, p.tciS2Other);
+            applyLocoTCIField('locoTCIS3', 'locoTCIS3Other', p.tciS3, p.tciS3Other);
+        } else if (p.tci) {
+            applyLocoTCIField('locoTCIS1', 'locoTCIS1Other', p.tci, p.tciOther);
         }
 
         const tbody = document.querySelector("#locoMovementTable tbody");
@@ -1416,9 +1505,14 @@ function clearLocoForm() {
     if (!confirm("確定要清除「機車調車作業紀錄」全部填寫內容嗎？\n此操作無法復原（本機儲存也會清除）。")) return;
 
     document.getElementById('locoDate').valueAsDate = new Date();
-    document.getElementById('locoTCI').value = '';
-    document.getElementById('locoTCIOther').value = '';
-    document.getElementById('locoTCIOther').style.display = 'none';
+    ['locoTCIS1', 'locoTCIS2', 'locoTCIS3'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    ['locoTCIS1Other', 'locoTCIS2Other', 'locoTCIS3Other'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; el.style.display = 'none'; }
+    });
 
     initLocoMovementTable();
     document.querySelector("#locoEventTable tbody").innerHTML = '';
@@ -1503,7 +1597,7 @@ function printReferenceSlips(copies) {
 
 function exportLocoExcel() {
     const date = document.getElementById('locoDate').value || '未填日期';
-    const tci = getTCIValue();
+    const tci = getLocoTCIValues();
     
     const movementRecords = [];
     document.querySelectorAll("#locoMovementTable tbody tr").forEach(tr => {
@@ -1535,7 +1629,10 @@ function exportLocoExcel() {
         ["港鐵機車調車作業紀錄 HSR-Train Ops-014"],
         ["表單類型", "LOCO"],
         ["日期 Date", date],
-        ["當值 TCI", tci],
+        ["S1 當值 TCI", tci.s1],
+        ["S2 當值 TCI", tci.s2],
+        ["S3 當值 TCI", tci.s3],
+        ["當值 TCI", `S1:${tci.s1 || '—'} / S2:${tci.s2 || '—'} / S3:${tci.s3 || '—'}`],
         ["機車運行紀錄 JSON", JSON.stringify(movementRecords)],
         ["特別事件 JSON", JSON.stringify(eventRecords)]
     ];
@@ -1700,48 +1797,73 @@ async function importAndMergeExcelFiles(input) {
                 globalMasterData.push({
                     type: "EMU",
                     date: fileDate || "—",
-                    mainInfo: fields["動車組車號"] || "—",
+                    mainInfo: `${fields["動車組車號"] || "—"}${fields["當值 TCI"] ? " / TCI:" + fields["當值 TCI"] : ""}`,
                     driverInfo: `${fields["司機姓名"] || "—"} (${fields["高鐵司機號"] || "—"})`,
                     runTrack: runDetails.join(" ➔ ") || "—",
                     events: eventDetails.length > 0 ? eventDetails.join(" ； ") : "無特別事件",
                     status: sigStatus
                 });
             } else if (formType === "LOCO") {
-                let runDetails = [];
                 let eventDetails = [];
-                let operatorSet = new Set();
-                
-                if (fields["機車運行紀錄 JSON"]) {
-                    try {
-                        const movementData = JSON.parse(fields["機車運行紀錄 JSON"]);
-                        runDetails = movementData.map(m => {
-                            if (m.operator1 && m.operator1.trim()) operatorSet.add(m.operator1.trim());
-                            if (m.operator2 && m.operator2.trim()) operatorSet.add(m.operator2.trim());
-                            return `${m.consist || ''} ${m.from || ''}→${m.to || ''} (${m.operator1 || ''}/${m.operator2 || ''}) ${m.timeDepart || ''}~${m.timeArrival || ''}`;
-                        });
-                    } catch (e) {}
-                }
-                
                 if (fields["特別事件 JSON"]) {
                     try {
                         const ev = JSON.parse(fields["特別事件 JSON"]);
                         eventDetails = ev.map(e => `[${e.time || '—'}] ${e.particulars || ''}`);
                     } catch (e) {}
                 }
-                
-                // 把所有出現過的司機1 / 司機2 名字整理後顯示
-                const operatorList = Array.from(operatorSet).filter(n => n && n !== "司機1" && n !== "司機2");
-                const driverInfoText = operatorList.length > 0 ? operatorList.join(" / ") : "—";
-                
-                globalMasterData.push({
-                    type: "LOCO",
-                    date: fileDate || "—",
-                    mainInfo: `TCI: ${fields["當值 TCI"] || "—"}`,
-                    driverInfo: driverInfoText,
-                    runTrack: runDetails.join(" ｜ ") || "—",
-                    events: eventDetails.length > 0 ? eventDetails.join(" ； ") : "無特別事件",
-                    status: "—"
-                });
+                const eventsText = eventDetails.length > 0 ? eventDetails.join(" ； ") : "無特別事件";
+
+                // 三更 TCI 對照：E(0700-1500)=S1, L(1500-2200)=S2, N(2200-0700)=S3
+                const tciByShift = {
+                    E: fields["S1 當值 TCI"] || "",
+                    L: fields["S2 當值 TCI"] || "",
+                    N: fields["S3 當值 TCI"] || ""
+                };
+                // 兼容舊檔只有單一「當值 TCI」
+                const legacyTci = fields["當值 TCI"] || "";
+
+                let movementData = [];
+                if (fields["機車運行紀錄 JSON"]) {
+                    try { movementData = JSON.parse(fields["機車運行紀錄 JSON"]); } catch (e) {}
+                }
+
+                if (!Array.isArray(movementData) || movementData.length === 0) {
+                    globalMasterData.push({
+                        type: "LOCO",
+                        date: fileDate || "—",
+                        mainInfo: legacyTci || "—",
+                        driverInfo: "—",
+                        runTrack: "—",
+                        events: eventsText,
+                        status: "—"
+                    });
+                } else {
+                    // 每一條運行紀錄各自一列；C 欄 TCI 依開車時間對應更次
+                    movementData.forEach((m, idx) => {
+                        const dep = m.timeDepart || "";
+                        const shift = getShiftCategory(dep); // E / L / N
+                        let tciName = tciByShift[shift] || "";
+                        if (!tciName && legacyTci && !legacyTci.includes("S1:")) tciName = legacyTci;
+                        const shiftLabel = shift === "E" ? "S1" : (shift === "L" ? "S2" : "S3");
+
+                        const ops = [m.operator1, m.operator2]
+                            .map(x => (x || "").trim())
+                            .filter(n => n && n !== "司機1" && n !== "司機2");
+                        const driverInfoText = ops.length ? ops.join(" / ") : "—";
+
+                        const runTrack = `${m.consist || ''} ${m.from || ''}→${m.to || ''} (${m.operator1 || ''}/${m.operator2 || ''}) ${m.timeDepart || ''}~${m.timeArrival || ''}`.trim();
+
+                        globalMasterData.push({
+                            type: "LOCO",
+                            date: fileDate || "—",
+                            mainInfo: tciName ? `${shiftLabel}:${tciName}` : `${shiftLabel}:—`,
+                            driverInfo: driverInfoText,
+                            runTrack: runTrack || "—",
+                            events: idx === 0 ? eventsText : "", // 特別事件只顯示在首列，避免重複
+                            status: "—"
+                        });
+                    });
+                }
             }
             
             // ---------- SSS 統計 ----------
