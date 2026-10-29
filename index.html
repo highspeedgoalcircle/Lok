@@ -432,15 +432,18 @@
                     <tr>
                         <th>類型</th>
                         <th>填報日期</th>
-                        <th>車號 / TCI</th>
+                        <th>TCI</th>
                         <th>司機 / 資料</th>
-                        <th>詳細運行軌跡</th>
+                        <th>車號・車列</th>
+                        <th>詳細運行軌跡（由→至）</th>
+                        <th>開車時間</th>
+                        <th>到達時間</th>
                         <th>特別事件</th>
                         <th>簽名 / 狀態</th>
                     </tr>
                 </thead>
                 <tbody id="masterTableBody">
-                    <tr><td colspan="7" class="text-center text-muted py-4">目前暫無數據，請先匯入 Excel 檔案。</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted py-4">目前暫無數據，請先匯入 Excel 檔案。</td></tr>
                 </tbody>
             </table>
         </div>
@@ -1766,18 +1769,24 @@ async function importAndMergeExcelFiles(input) {
             
             // ---------- 詳細合併總表 ----------
             if (formType === "EMU") {
-                let runDetails = [];
+                let runningPoints = []; // {loc, arr, dep}
                 let eventDetails = [];
                 let sigStatus = fields["電子簽名狀態"] || "未簽名";
                 
                 if (fields["運行軌跡 JSON"]) {
                     try {
                         const runningData = JSON.parse(fields["運行軌跡 JSON"]);
-                        runDetails = runningData.map(r => `${r.loc || r.location || '未知'}(到:${r.arr || r.arrival || '—'}/開:${r.dep || r.departure || '—'})`);
+                        if (Array.isArray(runningData)) {
+                            runningPoints = runningData.map(r => ({
+                                loc: r.loc || r.location || "未知",
+                                arr: r.arr || r.arrival || "",
+                                dep: r.dep || r.departure || ""
+                            })).filter(r => r.loc);
+                        }
                     } catch (e) {}
                 }
                 
-                if (runDetails.length === 0 && workbook.Sheets["運行與事件紀錄"]) {
+                if (runningPoints.length === 0 && workbook.Sheets["運行與事件紀錄"]) {
                     const logRows = XLSX.utils.sheet_to_json(workbook.Sheets["運行與事件紀錄"], { header: 1 });
                     let mode = "";
                     logRows.forEach(row => {
@@ -1786,7 +1795,11 @@ async function importAndMergeExcelFiles(input) {
                         if (String(row[0]).includes("二、特別事件")) { mode = "event"; return; }
                         if (row[0] === "電子簽名狀態") { sigStatus = row[1] || "未簽名"; mode = ""; return; }
                         if (mode === "run" && row[0] !== "地點 (Location)") {
-                            runDetails.push(`${row[0] || '未知'}(到:${row[1] || '—'}/開:${row[2] || '—'})`);
+                            runningPoints.push({
+                                loc: row[0] || "未知",
+                                arr: row[1] && row[1] !== "—" ? row[1] : "",
+                                dep: row[2] && row[2] !== "—" ? row[2] : ""
+                            });
                         }
                         if (mode === "event" && row[0] !== "發生時間" && row[2] !== "無特別事件報告") {
                             eventDetails.push(`[${row[0] || '—'} @ ${row[1] || '—'}] ${row[2] || '—'}`);
@@ -1794,15 +1807,58 @@ async function importAndMergeExcelFiles(input) {
                     });
                 }
                 
-                globalMasterData.push({
-                    type: "EMU",
-                    date: fileDate || "—",
-                    mainInfo: `${fields["動車組車號"] || "—"}${fields["當值 TCI"] ? " / TCI:" + fields["當值 TCI"] : ""}`,
-                    driverInfo: `${fields["司機姓名"] || "—"} (${fields["高鐵司機號"] || "—"})`,
-                    runTrack: runDetails.join(" ➔ ") || "—",
-                    events: eventDetails.length > 0 ? eventDetails.join(" ； ") : "無特別事件",
-                    status: sigStatus
-                });
+                const eventsText = eventDetails.length > 0 ? eventDetails.join(" ； ") : "無特別事件";
+                const tciInfo = fields["當值 TCI"] || "—";
+                const vehicleInfo = fields["動車組車號"] || "—";
+                const driverInfo = `${fields["司機姓名"] || "—"} (${fields["高鐵司機號"] || "—"})`;
+
+                // 相鄰地點組成「由→至」各一列（與 LOCO 相近）
+                // 開車時間 = 上站開車；到達時間 = 下站到達
+                if (runningPoints.length >= 2) {
+                    for (let i = 0; i < runningPoints.length - 1; i++) {
+                        const from = runningPoints[i];
+                        const to = runningPoints[i + 1];
+                        globalMasterData.push({
+                            type: "EMU",
+                            date: fileDate || "—",
+                            tci: tciInfo,
+                            driverInfo,
+                            vehicle: vehicleInfo,
+                            runTrack: `${from.loc}→${to.loc}`,
+                            timeDepart: from.dep || "—",
+                            timeArrival: to.arr || "—",
+                            events: i === 0 ? eventsText : "",
+                            status: i === 0 ? sigStatus : ""
+                        });
+                    }
+                } else if (runningPoints.length === 1) {
+                    const p = runningPoints[0];
+                    globalMasterData.push({
+                        type: "EMU",
+                        date: fileDate || "—",
+                        tci: tciInfo,
+                        driverInfo,
+                        vehicle: vehicleInfo,
+                        runTrack: p.loc,
+                        timeDepart: p.dep || "—",
+                        timeArrival: p.arr || "—",
+                        events: eventsText,
+                        status: sigStatus
+                    });
+                } else {
+                    globalMasterData.push({
+                        type: "EMU",
+                        date: fileDate || "—",
+                        tci: tciInfo,
+                        driverInfo,
+                        vehicle: vehicleInfo,
+                        runTrack: "—",
+                        timeDepart: "—",
+                        timeArrival: "—",
+                        events: eventsText,
+                        status: sigStatus
+                    });
+                }
             } else if (formType === "LOCO") {
                 let eventDetails = [];
                 if (fields["特別事件 JSON"]) {
@@ -1831,16 +1887,20 @@ async function importAndMergeExcelFiles(input) {
                     globalMasterData.push({
                         type: "LOCO",
                         date: fileDate || "—",
-                        mainInfo: legacyTci || "—",
+                        tci: legacyTci || "—",
                         driverInfo: "—",
+                        vehicle: "—",
                         runTrack: "—",
+                        timeDepart: "—",
+                        timeArrival: "—",
                         events: eventsText,
                         status: "—"
                     });
                 } else {
-                    // 每一條運行紀錄各自一列；C 欄 TCI 依開車時間對應更次
+                    // 每一條運行紀錄一列：TCI → 司機 → 車列 → 由→至
                     movementData.forEach((m, idx) => {
                         const dep = m.timeDepart || "";
+                        const arr = m.timeArrival || "";
                         const shift = getShiftCategory(dep); // E / L / N
                         let tciName = tciByShift[shift] || "";
                         if (!tciName && legacyTci && !legacyTci.includes("S1:")) tciName = legacyTci;
@@ -1851,15 +1911,21 @@ async function importAndMergeExcelFiles(input) {
                             .filter(n => n && n !== "司機1" && n !== "司機2");
                         const driverInfoText = ops.length ? ops.join(" / ") : "—";
 
-                        const runTrack = `${m.consist || ''} ${m.from || ''}→${m.to || ''} (${m.operator1 || ''}/${m.operator2 || ''}) ${m.timeDepart || ''}~${m.timeArrival || ''}`.trim();
+                        const consist = (m.consist || "").trim() || "—";
+                        const from = (m.from || "").trim() || "—";
+                        const to = (m.to || "").trim() || "—";
+                        const tciPart = tciName ? `${shiftLabel}:${tciName}` : `${shiftLabel}:—`;
 
                         globalMasterData.push({
                             type: "LOCO",
                             date: fileDate || "—",
-                            mainInfo: tciName ? `${shiftLabel}:${tciName}` : `${shiftLabel}:—`,
+                            tci: tciPart,
                             driverInfo: driverInfoText,
-                            runTrack: runTrack || "—",
-                            events: idx === 0 ? eventsText : "", // 特別事件只顯示在首列，避免重複
+                            vehicle: consist,
+                            runTrack: `${from}→${to}`,
+                            timeDepart: dep || "—",
+                            timeArrival: arr || "—",
+                            events: idx === 0 ? eventsText : "",
                             status: "—"
                         });
                     });
@@ -1931,18 +1997,21 @@ async function importAndMergeExcelFiles(input) {
 function renderMasterTable() {
     const tbody = document.getElementById("masterTableBody");
     if (globalMasterData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">未成功解析任何檔案。</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-4">未成功解析任何檔案。</td></tr>`;
         return;
     }
     tbody.innerHTML = globalMasterData.map(row => `
         <tr>
             <td><span class="badge ${row.type === 'EMU' ? 'bg-primary' : 'bg-warning text-dark'}">${row.type}</span></td>
             <td>${row.date}</td>
-            <td><strong>${row.mainInfo}</strong></td>
-            <td>${row.driverInfo}</td>
-            <td class="text-wrap" style="max-width:280px; color:#0056b3;">${row.runTrack}</td>
-            <td class="text-wrap" style="max-width:180px;">${row.events}</td>
-            <td>${row.status}</td>
+            <td><strong>${row.tci || row.mainInfo || "—"}</strong></td>
+            <td>${row.driverInfo || "—"}</td>
+            <td>${row.vehicle || "—"}</td>
+            <td class="text-wrap" style="max-width:220px; color:#0056b3;">${row.runTrack || "—"}</td>
+            <td>${row.timeDepart || "—"}</td>
+            <td>${row.timeArrival || "—"}</td>
+            <td class="text-wrap" style="max-width:180px;">${row.events || ""}</td>
+            <td>${row.status || ""}</td>
         </tr>
     `).join('');
 }
@@ -2099,9 +2168,20 @@ function exportMasterExcel() {
         alert("⚠️ 目前沒有詳細合併數據可下載！");
         return;
     }
-    const headers = [["類型", "填報日期", "車號/TCI", "司機/資料", "詳細運行軌跡", "特別事件", "簽名/狀態"]];
+    const headers = [["類型", "填報日期", "TCI", "司機/資料", "車號・車列", "詳細運行軌跡（由→至）", "開車時間", "到達時間", "特別事件", "簽名/狀態"]];
     globalMasterData.forEach(row => {
-        headers.push([row.type, row.date, row.mainInfo, row.driverInfo, row.runTrack, row.events, row.status]);
+        headers.push([
+            row.type,
+            row.date,
+            row.tci || row.mainInfo || "—",
+            row.driverInfo || "—",
+            row.vehicle || "—",
+            row.runTrack || "—",
+            row.timeDepart || "—",
+            row.timeArrival || "—",
+            row.events || "",
+            row.status || ""
+        ]);
     });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(headers), "詳細合併總表");
